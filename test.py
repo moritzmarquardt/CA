@@ -12,4 +12,4 @@ grid_image.show()
 
 # Extract region of interest (ROI) from image:
 ROI_image = da.extractROI(image, [[150, 0], [280, 70]])
-ROI_image.show()
+ROI_image.show(wait=10000)

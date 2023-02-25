@@ -1,0 +1,8 @@
+# ignore the files that were created by the pip install -e command
+TransitionanalysisForMembranes.egg-info/
+TransitionanalysisForMembranes/__pycache__/
+.vscode/
+__pycache__/
+.venv/
+data/
+images/
