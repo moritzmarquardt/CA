@@ -81,38 +81,39 @@ co2 = co2_analysis(co2_image)
 
 # Plot change 10 to larger number (or remove it) if it is desired to
 # keep the images longer on the screen
-co2.plt_show(10)
+# co2.plt_show(100)
+print(np.shape(co2.img))
 
 # !----- Main routine for tracer analysis
 
-# Read in baseline and tracer image and correct color and curvature
-baseline_tracer = darsia.Image(
-    image_folder + "tracer_0.jpg",
-    curvature_correction=curvature_correction,
-    color_correction=color_correction,
-)
-tracer_image = darsia.Image(
-    image_folder + "tracer_3.jpg",
-    curvature_correction=curvature_correction,
-    color_correction=color_correction,
-)
+# # Read in baseline and tracer image and correct color and curvature
+# baseline_tracer = darsia.Image(
+#     image_folder + "tracer_0.jpg",
+#     curvature_correction=curvature_correction,
+#     color_correction=color_correction,
+# )
+# tracer_image = darsia.Image(
+#     image_folder + "tracer_3.jpg",
+#     curvature_correction=curvature_correction,
+#     color_correction=color_correction,
+# )
 
-# Define restoration routine
+# # Define restoration routine
 
 
-# Construct concentration analysis for detecting the tracer concentration
-tracer_analysis = darsia.ConcentrationAnalysis(
-    baseline_tracer,
-    darsia.MonochromaticReduction(color="gray"),
-    None,
-    darsia.TVD(),
-    darsia.CombinedModel(
-        [darsia.LinearModel(), darsia.ClipModel(**{"min value": 0.0, "max value": 1.0})]
-    ),
-)
+# # Construct concentration analysis for detecting the tracer concentration
+# tracer_analysis = darsia.ConcentrationAnalysis(
+#     baseline_tracer,
+#     darsia.MonochromaticReduction(color="gray"),
+#     None,
+#     darsia.TVD(),
+#     darsia.CombinedModel(
+#         [darsia.LinearModel(), darsia.ClipModel(**{"min value": 0.0, "max value": 1.0})]
+#     ),
+# )
 
-# Determine tracer
-tracer = tracer_analysis(tracer_image)
+# # Determine tracer
+# tracer = tracer_analysis(tracer_image)
 
-# Plot
-tracer.plt_show(10)
+# # Plot
+# tracer.plt_show(10)
