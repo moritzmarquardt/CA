@@ -1,0 +1,79 @@
+{
+    "color": {
+        "roi": [
+            [
+                6787,
+                77
+            ],
+            [
+                6793,
+                555
+            ],
+            [
+                7510,
+                555
+            ],
+            [
+                7502,
+                78
+            ]
+        ]
+    },
+    "drift": {
+        "roi": [
+            [
+                6563,
+                0
+            ],
+            [
+                4472,
+                0
+            ],
+            [
+                4472,
+                779
+            ],
+            [
+                6563,
+                779
+            ]
+        ]
+    },
+    "curvature": {
+        "init": {
+            "horizontal_bulge": 5e-09,
+            "horizontal_center_offset": 0,
+            "vertical_bulge": 0,
+            "vertical_center_offset": 0
+        },
+        "crop": {
+            "pts_src": [
+                [
+                    322,
+                    281
+                ],
+                [
+                    298,
+                    4427
+                ],
+                [
+                    7640,
+                    4414
+                ],
+                [
+                    7600,
+                    281
+                ]
+            ],
+            "width": 0.92,
+            "height": 0.555,
+            "in meters": true
+        },
+        "bulge": {
+            "horizontal_bulge": -3.5698243885150705e-09,
+            "horizontal_center_offset": 286,
+            "vertical_bulge": -0.0,
+            "vertical_center_offset": 0
+        }
+    }
+}
