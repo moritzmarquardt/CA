@@ -1,0 +1,61 @@
+{
+    "description": "config file for two-color tracer analysis",
+
+    # TODO dimensions
+
+    "physical asset": {
+        "dimensions": {"width": 2.8, "height": 1.5},
+        "parameters": {"porosity": 0.44},
+        "volumes_path": "cache/volumes.npy",
+        "depth_path": "cache/depth.npy"
+    },
+
+    # TODO turn on?
+
+    "off color": {
+        "roi": [
+            [377, 502],
+            [561, 510],
+            [564, 249],
+            [380, 240]
+        ]
+    },
+
+    # TODO dedicated crop
+
+    "curvature": {
+
+        "crop": {
+            "pts_src": [[28, 30], [41, 4383], [7917, 4371], [7917, 19]],
+            "width": 2.8,
+            "height": 1.5
+        },
+
+        "use_cache": true
+    },
+
+    "tracer": {
+        "cleaning_filter": "cache/cleaning_filter.npy",
+
+        # TODO hsv 
+
+        "color": "gray",
+
+        # TODO test if working
+
+        "restoration resize": 0.25,
+        "restoration smoothing method": "isotropic bregman",
+        "restoration smoothing weight": 0.025,
+        "restoration smoothing eps": 1e-4,
+        "restoration smoothing max_num_iter": 100,
+
+        # TODO tune model parameters
+
+        "model scaling": 1.0,
+        "model offset": 0.0,
+
+        # TODO increase accrodingly for inspect routines
+
+        "verbosity": 0
+    }
+}
