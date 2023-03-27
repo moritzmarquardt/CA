@@ -9,7 +9,7 @@ start = time.time()
 
 config: dict = {}
 
-baseline_path = "./data/test/tracer_t0_original.jpg"
+baseline_path = "./data/tracer_timeseries/20220914-142404.TIF"
 baseline = da.Image(baseline_path, width=0.92, height=0.555, color_space="RGB")
 baseline.plt_show()
 
@@ -71,6 +71,7 @@ baseline = da.Image(
 baseline.show()
 
 # write config
-config_path = "./data/test/config.json"
-with open(config_path, "w") as outfile:
-    json.dump(config, outfile, indent=4)
+# config_path = "./data/test/config.json"
+# with open(config_path, "w") as outfile:
+#     json.dump(config, outfile, indent=4)
+print(config)
