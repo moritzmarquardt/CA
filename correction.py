@@ -1,5 +1,6 @@
 import darsia as da
-import json
+
+# import json
 import time
 
 # file to make config file
