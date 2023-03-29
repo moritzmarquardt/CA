@@ -3,8 +3,9 @@ inspired by darsia/presets/fluidflowertraceranalysis
 
 """
 from pathlib import Path
-from typing import Union
-import matplotlib as plt
+from typing import Union, Optional
+import matplotlib.pyplot as plt
+import cv2
 
 
 import numpy as np
@@ -20,6 +21,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         results: Union[str, Path],
         update_setup: bool = False,
         verbosity: int = 0,
+        **kwargs,
     ) -> None:
         """
         Setup of analysis.
@@ -35,8 +37,9 @@ class tTracerAnalysis(darsia.TracerAnalysis):
                 are printed to screen; default is False.
         """
         # Assign tracer analysis
-        print("init ttracer ana")
-        darsia.TracerAnalysis.__init__(self, baseline, config)
+        print("hii from init tTracerAnalysis")
+        self.roi = kwargs.get("roi")  # vor innit, weil
+        darsia.TracerAnalysis.__init__(self, baseline, config, update_setup)
         # Traceranalysis has
 
         # Create folder for results if not existent
@@ -80,11 +83,14 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         tracer_analysis = tConcentrationAnalysis(
             self.base,
             signal_reduction,
+            None,
             restoration,
             model,
             # self.labels,
             verbosity=verbosity,
+            roi=self.roi,
         )
+        print("hi from define tracer analysis finished with" + str(tracer_analysis))
 
         return tracer_analysis
 
@@ -140,9 +146,22 @@ class tTracerAnalysis(darsia.TracerAnalysis):
 
 
 class tConcentrationAnalysis(darsia.ConcentrationAnalysis):
-    def _inspect_scalar_signal(
-        self, img: np.ndarray, roi: list[tuple], bins: int = 100
+    def __init__(
+        self,
+        base: Union[darsia.Image, list[darsia.Image]],
+        signal_reduction: darsia.SignalReduction,
+        balancing: Optional[darsia.Model] = None,
+        restoration: Optional[darsia.TVD] = None,
+        model: darsia.Model = darsia.Identity,
+        labels: Optional[np.ndarray] = None,
+        **kwargs,
     ) -> None:
+        super().__init__(
+            base, signal_reduction, balancing, restoration, model, labels, **kwargs
+        )
+        self.roi = kwargs.get("roi", None)
+
+    def _inspect_diff(self, img: np.ndarray, bins: int = 100) -> None:
         """
         Routine allowing for plotting of intermediate results.
         Requires overwrite.
@@ -151,39 +170,41 @@ class tConcentrationAnalysis(darsia.ConcentrationAnalysis):
             img (np.ndarray): image
         """
         print("overwritten inspect routine")
+        roi = self.roi
         if self.verbosity >= 2:
-            plt.figure("Scalar signal")
+            plt.figure("difference test-baseline")
             plt.imshow(img)
 
-        # if isinstance(roi, tuple):
-        # roi = [roi]
+            if isinstance(roi, tuple):
+                roi = [roi]
 
-        # for i, r in enumerate(roi):
-        #     # Retrict to ROI
-        #     img_roi = img[r]
+            for i, r in enumerate(roi):
+                # Retrict to ROI
+                img_roi = img[r]
 
-        #     # Extract H, S, V components
-        #     hsv = cv2.cvtColor(img_roi, cv2.COLOR_RGB2HSV)
-        #     h_img = hsv[:, :, 0]
-        #     s_img = hsv[:, :, 1]
-        #     v_img = hsv[:, :, 2]
+                # Extract H, S, V components
 
-        #     # Extract values
-        #     h_values = np.linspace(np.min(h_img), np.max(h_img), bins)
-        #     s_values = np.linspace(np.min(s_img), np.max(s_img), bins)
-        #     v_values = np.linspace(np.min(v_img), np.max(v_img), bins)
+                hsv = cv2.cvtColor(img_roi.astype(np.float32), cv2.COLOR_RGB2HSV)
+                h_img = hsv[:, :, 0]
+                s_img = hsv[:, :, 1]
+                v_img = hsv[:, :, 2]
 
-        #     # Setup histograms
-        #     h_hist = np.histogram(h_img, bins=bins)[0]
-        #     s_hist = np.histogram(s_img, bins=bins)[0]
-        #     v_hist = np.histogram(v_img, bins=bins)[0]
+                # Extract values
+                h_values = np.linspace(np.min(h_img), np.max(h_img), bins)
+                s_values = np.linspace(np.min(s_img), np.max(s_img), bins)
+                v_values = np.linspace(np.min(v_img), np.max(v_img), bins)
 
-        #     # Plot
-        #     plt.figure(f"h {i}")
-        #     plt.plot(h_values, h_hist)
-        #     plt.figure(f"s {i}")
-        #     plt.plot(s_values, s_hist)
-        #     plt.figure(f"v {i}")
-        #     plt.plot(v_values, v_hist)
+                # Setup histograms
+                h_hist = np.histogram(h_img, bins=bins)[0]
+                s_hist = np.histogram(s_img, bins=bins)[0]
+                v_hist = np.histogram(v_img, bins=bins)[0]
 
-        # plt.show()
+                # Plot
+                plt.figure(f"h {i}")
+                plt.plot(h_values, h_hist)
+                plt.figure(f"s {i}")
+                plt.plot(s_values, s_hist)
+                plt.figure(f"v {i}")
+                plt.plot(v_values, v_hist)
+
+            plt.show()
