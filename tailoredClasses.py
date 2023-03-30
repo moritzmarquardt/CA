@@ -5,8 +5,8 @@ inspired by darsia/presets/fluidflowertraceranalysis
 from pathlib import Path
 from typing import Union, Optional
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import cv2
-
 
 import numpy as np
 
@@ -21,7 +21,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         results: Union[str, Path],
         update_setup: bool = False,
         verbosity: int = 0,
-        **kwargs,
+        inspect_diff_roi: slice = None,
     ) -> None:
         """
         Setup of analysis.
@@ -35,10 +35,14 @@ class tTracerAnalysis(darsia.TracerAnalysis):
                 routines is emptied.
             verbosity  (bool): flag controlling whether results of the post-analysis
                 are printed to screen; default is False.
+            inspect_diff_roi (slice): one slice is lower right corner, the other is upper left
+                für die inspect routine
+                inspect routine ist in tCA überschrieben und wird nur aufgerufen, wenn
+                inspect_diff_roi is not None
         """
         # Assign tracer analysis
         print("hii from init tTracerAnalysis")
-        self.roi = kwargs.get("roi")  # vor innit, weil
+        self.inspect_diff_roi = inspect_diff_roi
         darsia.TracerAnalysis.__init__(self, baseline, config, update_setup)
         # Traceranalysis has
 
@@ -88,7 +92,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
             model,
             # self.labels,
             verbosity=verbosity,
-            roi=self.roi,
+            inspect_diff_roi=self.inspect_diff_roi,
         )
         print("hi from define tracer analysis finished with" + str(tracer_analysis))
 
@@ -154,36 +158,53 @@ class tConcentrationAnalysis(darsia.ConcentrationAnalysis):
         restoration: Optional[darsia.TVD] = None,
         model: darsia.Model = darsia.Identity,
         labels: Optional[np.ndarray] = None,
+        inspect_diff_roi: slice = None,
         **kwargs,
     ) -> None:
         super().__init__(
             base, signal_reduction, balancing, restoration, model, labels, **kwargs
         )
-        self.roi = kwargs.get("roi", None)
+        self.inspect_diff_roi = inspect_diff_roi
 
     def _inspect_diff(self, img: np.ndarray, bins: int = 100) -> None:
         """
         Routine allowing for plotting of intermediate results.
         Requires overwrite.
+        gets called when concentrationanalysis is calles before smoothing, directly after
+        taking difference between baseline image and test image
 
         Args:
             img (np.ndarray): image
         """
         print("overwritten inspect routine")
-        roi = self.roi
-        if self.verbosity >= 2:
-            plt.figure("difference test-baseline")
-            plt.imshow(img)
-
+        if self.inspect_diff_roi is not None:
+            roi = self.inspect_diff_roi
+            img_roi = img[roi]  # Retrict to ROI
+            print(roi)
             if isinstance(roi, tuple):
                 roi = [roi]
+            print(roi)
+            print(roi[0][0])
+
+            plt.figure("roi in the difference test-baseline")
+            plt.imshow(img_roi)
+
+            fig, ax = plt.subplots()
+            ax.imshow(img)
+            width = roi[0][1].start - roi[0][0].start
+            height = roi[0][1].stop - roi[0][0].stop
+            rect = patches.Rectangle(
+                (roi[0][0].start, roi[0][0].stop),
+                width,
+                height,
+                linewidth=1,
+                edgecolor="r",
+                facecolor="none",
+            )
+            ax.add_patch(rect)
 
             for i, r in enumerate(roi):
-                # Retrict to ROI
-                img_roi = img[r]
-
                 # Extract H, S, V components
-
                 hsv = cv2.cvtColor(img_roi.astype(np.float32), cv2.COLOR_RGB2HSV)
                 h_img = hsv[:, :, 0]
                 s_img = hsv[:, :, 1]
