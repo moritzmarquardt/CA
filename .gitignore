@@ -4,6 +4,8 @@ TransitionanalysisForMembranes/__pycache__/
 .vscode/
 __pycache__/
 .venv/
-data/
+data/test
+data/tracer_timeseries/images
+data/tracer_timeseries/results
 images/
 cache/

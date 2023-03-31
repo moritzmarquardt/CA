@@ -1,0 +1,54 @@
+{
+    "description": "config file for two-color tracer analysis",
+    "physical asset": {
+        "dimensions": {
+            "width": 0.92,
+            "height": 0.555
+        }
+    },
+
+
+    "curvature": {
+        "crop": {
+            "pts_src": [
+                [
+                    380,
+                    530
+                ],
+                [
+                    340,
+                    4350
+                ],
+                [
+                    7540,
+                    4310
+                ],
+                [
+                    7500,
+                    480
+                ]
+            ],
+            "width": 0.92,
+            "height": 0.555,
+            "in meters": true
+        },
+        "use_cache": true
+    },
+    "tracer": {
+        "cleaning_filter": "cache/cleaning_filter.npy",
+
+
+
+
+        "restoration resize": 0.25,
+        "restoration smoothing method": "isotropic bregman",
+        "restoration smoothing weight": 0.025,
+        "restoration smoothing eps": 1e-4,
+        "restoration smoothing max_num_iter": 100,
+
+        "model scaling": 1.0,
+        "model offset": 0.0,
+
+        "verbosity": 0
+    }
+}
