@@ -40,9 +40,29 @@ assert len(images) > 0
 # Calibrate signal-data conversion model
 apply_calibration = ff.config["tracer"].get("model calibration", False)
 if apply_calibration:
+    # Define calibration images - pick 10 images here.
     random_calibration_indices = np.unique((np.random.rand(10) * 140).astype(np.int32))
     calibration_images = [images[i] for i in random_calibration_indices]
-    ff.calibrate_model(calibration_images, injection_rate=500)
+    # Define injection rate - expert knowledge
+    injection_rate = 500
+    # Define geometry of the rig
+    geometry = darsia.ExtrudedPorousGeometry(
+        depth=self.config["physical_asset"]["dimensions"]["depth"],
+        porosity=self.config["physical_asset"]["porosity"],
+        **shape_metadata
+    )
+    # Apply calibration
+    ff.tracer_analysis.calibrate_model(
+        images,
+        options={
+            "model_position": 0,
+            "geometry": geometry,
+            "injection_rate": injection_rate,
+            "initial_guess": [1.0, 0.0],
+            "tol": 1e-1,
+            "maxiter": 100,
+        },
+    )
 
 # Track evolution of injected volume - initialize containers
 times = []
