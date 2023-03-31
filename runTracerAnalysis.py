@@ -35,7 +35,37 @@ baseline = da.Image(
 )
 baseline.plt_show()
 
+######################################
+# build tailored signal reduction
 
+# tracer_config = config["tracer"]
+# print(tracer_config)
+# config taken from the config file
+tracer_config = {
+    "cleaning_filter": "cache/cleaning_filter.npy",
+    "color": "hsv",  # define colorspace where the reducction is based on
+    "hue lower bound": 0.055,  # lower treshold for tracer detection based on hue value
+    "hue upper bound": 0.1,
+    "saturation lower bound": 0.8,
+    "saturation upper bound": 1,
+    "restoration resize": 0.25,
+    "restoration smoothing method": "isotropic bregman",
+    "restoration smoothing weight": 0.025,
+    "restoration smoothing eps": 0.0001,
+    "restoration smoothing max_num_iter": 100,
+    "model scaling": 1.0,
+    "model offset": 0.0,
+    "verbosity": 0,
+}
+
+signal_reduction = da.MonochromaticReduction(**tracer_config)
+# ? wie gehe ich vor, dass ich ne monocchromatische signal reduction aufbauen kann
+# und auch verwendet wird
+# ? Normierung
+# ? Wie binde ich das in ein Modell ein?
+# ? Wie wird das modell kalibriert?
+
+#########################################
 # build the tailored tracer analysis class with
 # the config file, baseline image and a results folder
 analysis = tTracerAnalysis(
@@ -46,13 +76,10 @@ analysis = tTracerAnalysis(
     # verbosity=0, # wird schon in config gesetzt
     inspect_diff_roi=(slice(2800, 3000), slice(3200, 3400)),
     # inspect_diff_roi=(slice(2650, 2950), slice(3100, 3500)),
+    signal_reduction=signal_reduction,
 )
 print("tracer analysis build successfully")
 
 # run a single image analysis on the test_img
 test = analysis.single_image_analysis(tracer_path)
 test.plt_show()
-
-
-######################################
-# build signal reduction

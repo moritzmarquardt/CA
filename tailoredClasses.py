@@ -22,6 +22,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         update_setup: bool = False,
         verbosity: int = 0,
         inspect_diff_roi: slice = None,
+        signal_reduction: darsia.MonochromaticReduction() = None,
     ) -> None:
         """
         Setup of analysis.
@@ -43,6 +44,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         # Assign tracer analysis
         print("hii from init tTracerAnalysis")
         self.inspect_diff_roi = inspect_diff_roi
+        self.signal_reduction = signal_reduction
         darsia.TracerAnalysis.__init__(self, baseline, config, update_setup)
         # Traceranalysis has
 
@@ -58,7 +60,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
 
     def define_tracer_analysis(self) -> darsia.ConcentrationAnalysis:
         # Define signal reduction
-        signal_reduction = darsia.MonochromaticReduction(**self.config["tracer"])
+        # signal_reduction = darsia.MonochromaticReduction(**self.config["tracer"])
 
         # Define restoration object - coarsen, tvd, resize
         original_size = self.base.img.shape[:2]
@@ -86,7 +88,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
 
         tracer_analysis = tConcentrationAnalysis(
             self.base,
-            signal_reduction,
+            self.signal_reduction,
             None,
             restoration,
             model,
