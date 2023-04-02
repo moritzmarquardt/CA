@@ -23,6 +23,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         verbosity: int = 0,
         inspect_diff_roi: slice = None,
         signal_reduction: darsia.MonochromaticReduction() = None,
+        model: darsia.Model() = None,
     ) -> None:
         """
         Setup of analysis.
@@ -45,15 +46,19 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         print("hii from init tTracerAnalysis")
         self.inspect_diff_roi = inspect_diff_roi
         self.signal_reduction = signal_reduction
+        self.model = model
+        self.verbosity = verbosity
         darsia.TracerAnalysis.__init__(self, baseline, config, update_setup)
-        # Traceranalysis has
+        # Traceranalysis has all thhe corrections for the image
+        # read wrtes cleaning filters
+        # calls the define tracer analysis and stores in self.tracer analysis
 
         # Create folder for results if not existent
         self.path_to_results: Path = Path(results)
         self.path_to_results.parents[0].mkdir(parents=True, exist_ok=True)
 
         # Store verbosity
-        self.verbosity = verbosity
+
         print("init of tTracerAnalysis successful")
 
     # ! ---- Analysis tools for detecting the tracer concentration
@@ -73,27 +78,27 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         )
 
         # Linear model for converting signals to data
-        model = darsia.CombinedModel(
-            [
-                darsia.LinearModel(key="model ", **self.config["tracer"]),
-                darsia.ClipModel(**{"min value": 0.0, "max value": 1.0}),
-            ]
-        )
+        # model = darsia.CombinedModel(
+        #     [
+        #         darsia.LinearModel(key="model ", **self.config["tracer"]),
+        #         darsia.ClipModel(**{"min value": 0.0, "max value": 1.0}),
+        #     ]
+        # )
 
         ###################################################################
         # Final concentration analysis with possibility for calibration
         # of both the balancing and the model
 
-        verbosity = self.config["tracer"].get("verbosity", 0)
+        # verbosity = self.config["tracer"].get("verbosity", 0)
 
         tracer_analysis = tConcentrationAnalysis(
             self.base,
             self.signal_reduction,
             None,
             restoration,
-            model,
+            self.model,
             # self.labels,
-            verbosity=verbosity,
+            verbosity=self.verbosity,
             inspect_diff_roi=self.inspect_diff_roi,
         )
         print("hi from define tracer analysis finished with" + str(tracer_analysis))
@@ -101,29 +106,6 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         return tracer_analysis
 
     # ! ---- Calibration routines
-
-    def calibrate_model(self, calibration_images: list[Path], options: dict) -> None:
-        """
-        Calibration routine aiming at matching the injection rate
-
-        NOTE: Calling this routine will require the definition of
-        a geometry for data integration.
-
-        Args:
-            calibration_images (list of Path): calibration images.
-            options (dict): parameters for calibration.
-
-        """
-        # Read and process the images
-        print("Calibration: Processing images...")
-        images = [self._read(path) for path in calibration_images]
-
-        # Calibrate the overall signal via a simple constant rescaling
-        print("Calibration: Model...")
-        self.tracer_analysis.calibrate_model(
-            images,
-            options=dict(options, **{"model position": 0, "geometry": self.geometry}),
-        )
 
     # ! ----- Analysis tools
 
@@ -151,7 +133,9 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         return tracer
 
 
-class tConcentrationAnalysis(darsia.ConcentrationAnalysis):
+class tConcentrationAnalysis(
+    darsia.ConcentrationAnalysis, darsia.InjectionRateModelObjectiveMixin
+):
     def __init__(
         self,
         base: Union[darsia.Image, list[darsia.Image]],

@@ -1,11 +1,14 @@
 {
     "description": "config file for two-color tracer analysis",
-    "physical asset": {
+    "physical_asset": {
         "dimensions": {
             "width": 0.92,
-            "height": 0.555
-        }
+            "height": 0.555,
+            "depth": 0.012
+        },
+        "porosity": 0.44
     },
+    "reference_date": "2023-03-31 14:20:00",
 
 
     "curvature": {
@@ -37,17 +40,12 @@
     "tracer": {
         "cleaning_filter": "cache/cleaning_filter.npy",
 
-
-
-
         "restoration resize": 0.25,
         "restoration smoothing method": "isotropic bregman",
         "restoration smoothing weight": 0.025,
         "restoration smoothing eps": 1e-4,
         "restoration smoothing max_num_iter": 100,
 
-        "model scaling": 1.0,
-        "model offset": 0.0,
 
         "verbosity": 0
     }

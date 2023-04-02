@@ -6,6 +6,7 @@ import darsia as da
 from tailoredClasses import tTracerAnalysis
 import json
 from pathlib import Path
+import skimage
 
 print("hi")
 
@@ -19,67 +20,98 @@ with open(basis_path + "config.json") as json_file:
     config = json.load(json_file)
 
 curvature_correction = da.CurvatureCorrection(config["curvature"])
-width = config["physical asset"]["dimensions"]["width"]
-height = config["physical asset"]["dimensions"]["height"]
+width = config["physical_asset"]["dimensions"]["width"]
+height = config["physical_asset"]["dimensions"]["height"]
 
 # Initialize the baseline image (one is enough for this purpose)
 # the width and height of the physical picture is fetched from the curvatrue config
 # if there are no explicit dimensions given
 # this is used to find the sliceds for the patch inspection below
-baseline = da.Image(
-    img=tracer_path,
+baseline = da.imread(
+    path=tracer_path,
     width=width,
     height=height,
-    color_space="RGB",
-    curvature_correction=curvature_correction,
+    # color_space="RGB",
+    transformations=[curvature_correction],
 )
-baseline.plt_show()
+baseline.img = skimage.img_as_float(baseline.img)
+# baseline.show("test")
 
 ######################################
 # build tailored signal reduction
 
-# tracer_config = config["tracer"]
-# print(tracer_config)
 # config taken from the config file
 tracer_config = {
-    "cleaning_filter": "cache/cleaning_filter.npy",
     "color": "hsv",  # define colorspace where the reducction is based on
     "hue lower bound": 0.055,  # lower treshold for tracer detection based on hue value
     "hue upper bound": 0.1,
     "saturation lower bound": 0.8,
     "saturation upper bound": 1,
-    "restoration resize": 0.25,
-    "restoration smoothing method": "isotropic bregman",
-    "restoration smoothing weight": 0.025,
-    "restoration smoothing eps": 0.0001,
-    "restoration smoothing max_num_iter": 100,
-    "model scaling": 1.0,
-    "model offset": 0.0,
-    "verbosity": 0,
 }
 
 signal_reduction = da.MonochromaticReduction(**tracer_config)
-# ? wie gehe ich vor, dass ich ne monocchromatische signal reduction aufbauen kann
+# ? wie gehe ich vor, dass ich ne monochromatische signal reduction aufbauen kann
 # und auch verwendet wird
-# ? Normierung
-# ? Wie binde ich das in ein Modell ein?
-# ? Wie wird das modell kalibriert?
+
+
+########################################
+# build tailored model
+model_config = {
+    "model scaling": 1.0,
+    "model offset": 0.0,
+}
+
+# Linear model for converting signals to data
+model = da.CombinedModel(
+    [
+        da.LinearModel(key="model ", **model_config),
+        da.ClipModel(**{"min value": 0.0, "max value": 1.0}),
+    ]
+)
+# ? wie mache ich ein model für die signal reduction cooeffizienten
 
 #########################################
 # build the tailored tracer analysis class with
-# the config file, baseline image and a results folder
 analysis = tTracerAnalysis(
     config=Path(basis_path + "config.json"),
     baseline=[baseline_path],
     results=Path(basis_path + "results/"),
     update_setup=False,  # chache nicht nutzen und neu schreiben
-    # verbosity=0, # wird schon in config gesetzt
-    inspect_diff_roi=(slice(2800, 3000), slice(3200, 3400)),
-    # inspect_diff_roi=(slice(2650, 2950), slice(3100, 3500)),
+    verbosity=0,  # overwritten by config?
+    # inspect_diff_roi=(slice(2800, 3000), slice(3200, 3400)),
     signal_reduction=signal_reduction,
+    model=model,
 )
 print("tracer analysis build successfully")
 
 # run a single image analysis on the test_img
 test = analysis.single_image_analysis(tracer_path)
-test.plt_show()
+# test.show()
+
+tracer_paths = [
+    Path(basis_path + "images/20220914-142627.TIF"),
+    Path(basis_path + "images/20220914-142657.TIF"),
+    Path(basis_path + "images/20220914-142727.TIF"),
+    Path(basis_path + "images/20220914-142757.TIF"),
+    Path(basis_path + "images/20220914-142827.TIF"),
+]
+print("processing images ...")
+calibration_images = [analysis._read(path) for path in tracer_paths]
+
+shape_metadata = baseline.shape_metadata()
+geometry = da.ExtrudedPorousGeometry(
+    depth=config["physical_asset"]["dimensions"]["depth"],
+    porosity=config["physical_asset"]["porosity"],
+    **shape_metadata
+)
+options = {
+    "model_position": 0,  # welches model soll calibriert werden
+    "geometry": geometry,
+    "injection_rate": 500,
+    "initial_guess": [1.0, 0.0],
+    "tol": 1e-1,
+    "maxiter": 100,
+}
+print("calibrating ...")
+calibration = analysis.tracer_analysis.calibrate_model(calibration_images, options)
+print(calibration)

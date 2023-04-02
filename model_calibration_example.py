@@ -46,6 +46,7 @@ if apply_calibration:
     # Define injection rate - expert knowledge
     injection_rate = 500
     # Define geometry of the rig
+    shape_metadata = 
     geometry = darsia.ExtrudedPorousGeometry(
         depth=self.config["physical_asset"]["dimensions"]["depth"],
         porosity=self.config["physical_asset"]["porosity"],
