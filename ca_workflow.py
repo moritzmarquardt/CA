@@ -1,6 +1,10 @@
 import darsia as da
 import json
 
+"""
+
+"""
+
 # 1. step: make config file for corrections and preprocessing
 # use correction.py
 print("hi")

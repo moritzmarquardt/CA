@@ -43,7 +43,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
                 inspect_diff_roi is not None
         """
         # Assign tracer analysis
-        print("hii from init tTracerAnalysis")
+        print("hi from init tTracerAnalysis")
         self.inspect_diff_roi = inspect_diff_roi
         self.signal_reduction = signal_reduction
         self.model = model
@@ -172,10 +172,11 @@ class tConcentrationAnalysis(
             print(roi)
             print(roi[0][0])
 
-            plt.figure("roi in the difference test-baseline")
+            plt.figure("roi in diff test-baseline")
             plt.imshow(img_roi)
 
             fig, ax = plt.subplots()
+            fig.canvas.manager.set_window_title(self.inspect_diff_roi)
             ax.imshow(img)
             width = roi[0][1].start - roi[0][0].start
             height = roi[0][1].stop - roi[0][0].stop

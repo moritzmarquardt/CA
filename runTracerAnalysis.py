@@ -6,7 +6,6 @@ import darsia as da
 from tailoredClasses import tTracerAnalysis
 import json
 from pathlib import Path
-import skimage
 
 print("hi")
 
@@ -24,9 +23,6 @@ width = config["physical_asset"]["dimensions"]["width"]
 height = config["physical_asset"]["dimensions"]["height"]
 
 # Initialize the baseline image (one is enough for this purpose)
-# the width and height of the physical picture is fetched from the curvatrue config
-# if there are no explicit dimensions given
-# this is used to find the sliceds for the patch inspection below
 baseline = da.imread(
     path=tracer_path,
     width=width,
@@ -34,8 +30,7 @@ baseline = da.imread(
     # color_space="RGB",
     transformations=[curvature_correction],
 )
-baseline.img = skimage.img_as_float(baseline.img)
-# baseline.show("test")
+baseline.show("test")
 
 ######################################
 # build tailored signal reduction
@@ -50,7 +45,6 @@ tracer_config = {
 }
 
 signal_reduction = da.MonochromaticReduction(**tracer_config)
-# ? wie gehe ich vor, dass ich ne monochromatische signal reduction aufbauen kann
 # und auch verwendet wird
 
 
@@ -68,7 +62,6 @@ model = da.CombinedModel(
         da.ClipModel(**{"min value": 0.0, "max value": 1.0}),
     ]
 )
-# ? wie mache ich ein model für die signal reduction cooeffizienten
 
 #########################################
 # build the tailored tracer analysis class with
@@ -77,7 +70,7 @@ analysis = tTracerAnalysis(
     baseline=[baseline_path],
     results=Path(basis_path + "results/"),
     update_setup=False,  # chache nicht nutzen und neu schreiben
-    verbosity=0,  # overwritten by config?
+    verbosity=0,
     # inspect_diff_roi=(slice(2800, 3000), slice(3200, 3400)),
     signal_reduction=signal_reduction,
     model=model,
