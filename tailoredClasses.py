@@ -21,7 +21,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         results: Union[str, Path],
         update_setup: bool = False,
         verbosity: int = 0,
-        inspect_diff_roi: slice = None,
+        roi: slice = None,
         signal_reduction: darsia.MonochromaticReduction() = None,
         model: darsia.Model() = None,
     ) -> None:
@@ -37,14 +37,14 @@ class tTracerAnalysis(darsia.TracerAnalysis):
                 routines is emptied.
             verbosity  (bool): flag controlling whether results of the post-analysis
                 are printed to screen; default is False.
-            inspect_diff_roi (slice): one slice is lower right corner, the other is upper left
+            roi (slice): one slice is lower right corner, the other is upper left
                 für die inspect routine
                 inspect routine ist in tCA überschrieben und wird nur aufgerufen, wenn
-                inspect_diff_roi is not None
+                roi is not None
         """
         # Assign tracer analysis
         print("hi from init tTracerAnalysis")
-        self.inspect_diff_roi = inspect_diff_roi
+        self.roi = roi
         self.signal_reduction = signal_reduction
         self.model = model
         self.verbosity = verbosity
@@ -99,7 +99,7 @@ class tTracerAnalysis(darsia.TracerAnalysis):
             self.model,
             # self.labels,
             verbosity=self.verbosity,
-            inspect_diff_roi=self.inspect_diff_roi,
+            roi=self.roi,
         )
         print("hi from define tracer analysis finished with" + str(tracer_analysis))
 
@@ -144,19 +144,19 @@ class tConcentrationAnalysis(
         restoration: Optional[darsia.TVD] = None,
         model: darsia.Model = darsia.Identity,
         labels: Optional[np.ndarray] = None,
-        inspect_diff_roi: slice = None,
+        roi: slice = None,
         **kwargs,
     ) -> None:
         super().__init__(
             base, signal_reduction, balancing, restoration, model, labels, **kwargs
         )
-        self.inspect_diff_roi = inspect_diff_roi
+        self.roi = roi
 
     def _inspect_all_in_roi(
         self, diff, signal, clean_signal, balanced_signal, smooth_signal, concentration
     ):
         if self.verbosity >= 2:
-            roi = self.inspect_diff_roi
+            roi = self.roi
             plt.figure("propgation of the processing")
             plt.subplot(2, 3, 1)
             plt.imshow(diff[roi])
@@ -171,7 +171,17 @@ class tConcentrationAnalysis(
             plt.subplot(2, 3, 6)
             plt.imshow(concentration[roi])
 
-    def _inspect_diff(self, img: np.ndarray, bins: int = 100) -> None:
+    def _inspect_cut(self, img):
+        if self.verbosity >= 1:
+            roi = self.roi
+            img_roi = img[roi]
+            average = np.average(img_roi, axis=0)
+            plt.subplot(2, 1, 1)
+            plt.plot(average)
+            plt.subplot(2, 1, 2)
+            plt.imshow(img_roi)
+
+    def _inspect_roi_hsv(self, img: np.ndarray, bins: int = 100) -> None:
         """
         Routine allowing for plotting of intermediate results.
         Requires overwrite.
@@ -181,12 +191,8 @@ class tConcentrationAnalysis(
         Args:
             img (np.ndarray): image
         """
-        print("overwritten inspect routine")
-        if self.inspect_diff_roi is not None:
-            roi = self.inspect_diff_roi
-            # if isinstance(roi, tuple):
-            #     roi = [roi]
-            # roi: slices: first is the pixel range from top to bottom, second from left to right
+        if self.roi is not None and self.verbosity >= 2:
+            roi = self.roi
             img_roi = img[roi]
 
             plt.figure("roi in diff test-baseline")
@@ -230,5 +236,3 @@ class tConcentrationAnalysis(
             plt.plot(s_values, s_hist)
             plt.figure("v")
             plt.plot(v_values, v_hist)
-
-            plt.show()
