@@ -35,38 +35,37 @@ the config file has to contain
 with open(basis_path + "config.json") as json_file:
     config = json.load(json_file)
 
-curvature_correction = da.CurvatureCorrection(config["curvature"])
-width = config["physical_asset"]["dimensions"]["width"]
-height = config["physical_asset"]["dimensions"]["height"]
+if False:
+    curvature_correction = da.CurvatureCorrection(config["curvature"])
+    width = config["physical_asset"]["dimensions"]["width"]
+    height = config["physical_asset"]["dimensions"]["height"]
 
-# Initialize the baseline image (one is enough for this purpose)
-baseline = da.imread(
-    path=tracer_path,
-    width=width,
-    height=height,
-    # color_space="RGB",
-    transformations=[curvature_correction],
-)
-# show the picture to get coodinates of suiting patches / rois
-# baseline.show("test")
-fig = plt.figure("baseline image to select roi for colour analysis")
-plt.imshow(skimage.img_as_float(baseline.img))
+    # Initialize the baseline image (one is enough for this purpose)
+    baseline = da.imread(
+        path=tracer_path,
+        width=width,
+        height=height,
+        # color_space="RGB",
+        transformations=[curvature_correction],
+    )
+    # show the picture to get coodinates of suiting patches / rois
+    # baseline.show("test")
+    fig = plt.figure("baseline image to select roi for colour analysis")
+    plt.imshow(skimage.img_as_float(baseline.img))
 
-
-# use matplotlib to print coordinates of roi selected by double clicks
-def onclick(event):
-    if event.dblclick:
-        print(
-            "double click: xdata=%f, ydata=%f"
-            % (
-                event.xdata,
-                event.ydata,
+    # use matplotlib to print coordinates of roi selected by double clicks
+    def onclick(event):
+        if event.dblclick:
+            print(
+                "double click: xdata=%f, ydata=%f"
+                % (
+                    event.xdata,
+                    event.ydata,
+                )
             )
-        )
 
-
-cid = fig.canvas.mpl_connect("button_press_event", onclick)
-plt.show()
+    cid = fig.canvas.mpl_connect("button_press_event", onclick)
+    plt.show()
 
 ######################################
 # build tailored signal reduction
@@ -74,9 +73,9 @@ plt.show()
 # config taken from the config file
 tracer_config = {
     "color": "hsv",
-    "hue lower bound": 0.055,
-    "hue upper bound": 0.1,
-    "saturation lower bound": 0.8,
+    "hue lower bound": 340 / 360,
+    "hue upper bound": 36 / 360,
+    "saturation lower bound": 0.4,
     "saturation upper bound": 1,
 }
 signal_reduction = da.MonochromaticReduction(**tracer_config)
@@ -105,15 +104,18 @@ analysis = tTracerAnalysis(
     baseline=[baseline_path],
     results=Path(basis_path + "results/"),
     update_setup=False,  # chache nicht nutzen und neu schreiben
-    verbosity=0,
-    inspect_diff_roi=(slice(2800, 3000), slice(3200, 3400)),
+    verbosity=3,  # overwrites the config file
+    inspect_diff_roi=(slice(2800, 3300), slice(2000, 2500)),
+    # slices: first is the pixel range from top to bottom, second from left to right
+    # first y slice then x slice ?WARUM?
     signal_reduction=signal_reduction,
     model=model,
 )
 print("TracerAnalysis build successfully")
 
-# run a single image analysis on the test_img
-print("apply the TracerAnalysis to test tracer image")
-test = analysis.single_image_analysis(tracer_path)
-print("TracerAnalysis ran successful, show result")
-test.show()
+if True:
+    # run a single image analysis on the test_img
+    print("apply the TracerAnalysis to test tracer image")
+    test = analysis.single_image_analysis(tracer_path)
+    print("TracerAnalysis ran successful, show result")
+    test.show()

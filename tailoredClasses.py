@@ -152,6 +152,25 @@ class tConcentrationAnalysis(
         )
         self.inspect_diff_roi = inspect_diff_roi
 
+    def _inspect_all_in_roi(
+        self, diff, signal, clean_signal, balanced_signal, smooth_signal, concentration
+    ):
+        if self.verbosity >= 2:
+            roi = self.inspect_diff_roi
+            plt.figure("propgation of the processing")
+            plt.subplot(2, 3, 1)
+            plt.imshow(diff[roi])
+            plt.subplot(2, 3, 2)
+            plt.imshow(signal[roi])
+            plt.subplot(2, 3, 3)
+            plt.imshow(clean_signal[roi])
+            plt.subplot(2, 3, 4)
+            plt.imshow(balanced_signal[roi])
+            plt.subplot(2, 3, 5)
+            plt.imshow(smooth_signal[roi])
+            plt.subplot(2, 3, 6)
+            plt.imshow(concentration[roi])
+
     def _inspect_diff(self, img: np.ndarray, bins: int = 100) -> None:
         """
         Routine allowing for plotting of intermediate results.
@@ -165,23 +184,21 @@ class tConcentrationAnalysis(
         print("overwritten inspect routine")
         if self.inspect_diff_roi is not None:
             roi = self.inspect_diff_roi
-            img_roi = img[roi]  # Retrict to ROI
-            print(roi)
-            if isinstance(roi, tuple):
-                roi = [roi]
-            print(roi)
-            print(roi[0][0])
+            # if isinstance(roi, tuple):
+            #     roi = [roi]
+            # roi: slices: first is the pixel range from top to bottom, second from left to right
+            img_roi = img[roi]
 
             plt.figure("roi in diff test-baseline")
             plt.imshow(img_roi)
 
             fig, ax = plt.subplots()
-            fig.canvas.manager.set_window_title(self.inspect_diff_roi)
+            fig.canvas.manager.set_window_title(roi)
             ax.imshow(img)
-            width = roi[0][1].start - roi[0][0].start
-            height = roi[0][1].stop - roi[0][0].stop
+            height = roi[0].stop - roi[0].start
+            width = roi[1].stop - roi[1].start
             rect = patches.Rectangle(
-                (roi[0][0].start, roi[0][0].stop),
+                (roi[1].start, roi[0].start),
                 width,
                 height,
                 linewidth=1,
@@ -190,29 +207,28 @@ class tConcentrationAnalysis(
             )
             ax.add_patch(rect)
 
-            for i, r in enumerate(roi):
-                # Extract H, S, V components
-                hsv = cv2.cvtColor(img_roi.astype(np.float32), cv2.COLOR_RGB2HSV)
-                h_img = hsv[:, :, 0]
-                s_img = hsv[:, :, 1]
-                v_img = hsv[:, :, 2]
+            # Extract H, S, V components
+            hsv = cv2.cvtColor(img_roi.astype(np.float32), cv2.COLOR_RGB2HSV)
+            h_img = hsv[:, :, 0]
+            s_img = hsv[:, :, 1]
+            v_img = hsv[:, :, 2]
 
-                # Extract values
-                h_values = np.linspace(np.min(h_img), np.max(h_img), bins)
-                s_values = np.linspace(np.min(s_img), np.max(s_img), bins)
-                v_values = np.linspace(np.min(v_img), np.max(v_img), bins)
+            # Extract values
+            h_values = np.linspace(np.min(h_img), np.max(h_img), bins)
+            s_values = np.linspace(np.min(s_img), np.max(s_img), bins)
+            v_values = np.linspace(np.min(v_img), np.max(v_img), bins)
 
-                # Setup histograms
-                h_hist = np.histogram(h_img, bins=bins)[0]
-                s_hist = np.histogram(s_img, bins=bins)[0]
-                v_hist = np.histogram(v_img, bins=bins)[0]
+            # Setup histograms
+            h_hist = np.histogram(h_img, bins=bins)[0]
+            s_hist = np.histogram(s_img, bins=bins)[0]
+            v_hist = np.histogram(v_img, bins=bins)[0]
 
-                # Plot
-                plt.figure(f"h {i}")
-                plt.plot(h_values, h_hist)
-                plt.figure(f"s {i}")
-                plt.plot(s_values, s_hist)
-                plt.figure(f"v {i}")
-                plt.plot(v_values, v_hist)
+            # Plot
+            plt.figure("h")
+            plt.plot(h_values, h_hist)
+            plt.figure("s")
+            plt.plot(s_values, s_hist)
+            plt.figure("v")
+            plt.plot(v_values, v_hist)
 
             plt.show()

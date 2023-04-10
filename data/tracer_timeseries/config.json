@@ -44,9 +44,6 @@
         "restoration smoothing method": "isotropic bregman",
         "restoration smoothing weight": 0.025,
         "restoration smoothing eps": 1e-4,
-        "restoration smoothing max_num_iter": 100,
-
-
-        "verbosity": 0
+        "restoration smoothing max_num_iter": 100
     }
 }
