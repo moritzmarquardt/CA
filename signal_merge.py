@@ -1,13 +1,5 @@
 """
-script to analyze a patch of the picture
-
-it can be used to see the overwritten routine _inspect_diff in
-the tailoredConcentrationAnalysis to inspect the diff and
-analyse the colors visible in the given patch (of the tracer)
-
-the goal is to define a routine that allows for simple colour
-analysis of a patch to in the end find a good hue threshold
-or onother colour space for a good signal reduction.
+merge signals together and experiment and anlyse
 """
 import darsia as da
 from tailoredClasses import tTracerAnalysis
@@ -17,10 +9,7 @@ from pathlib import Path
 print("hi")
 
 basis_path = "./data/tracer_timeseries/"
-# picture with no tracer present
 baseline_path = basis_path + "images/20220914-142404.TIF"
-# picture with tracer present; ideally with big concentration
-# gradients to allow for more detailed analysis
 tracer_path = basis_path + "images/20220914-150357.TIF"
 
 
@@ -35,7 +24,7 @@ with open(basis_path + "config.json") as json_file:
 
 
 ######################################
-# build tailored signal reduction
+# build tailored signal reductions
 
 # config taken from the config file
 tracer_config_blue = {
@@ -76,8 +65,6 @@ model = da.CombinedModel(
 )
 
 #########################################
-# build the tailored tracer analysis class with
-# this allows for actually analysing the patch / roi
 print("TracerAnalysis building ...")
 
 analysis_blue = tTracerAnalysis(
@@ -91,23 +78,11 @@ analysis_blue = tTracerAnalysis(
     model=model,
 )
 
-# analysis_green = tTracerAnalysis(
-#     config=Path(basis_path + "config.json"),
-#     baseline=[baseline_path],
-#     results=Path(basis_path + "results/"),
-#     update_setup=False,  # chache nicht nutzen und neu schreiben
-#     verbosity=2,  # overwrites the config file
-#     signal_reduction=[signal_reduction_green],
-#     model=model,
-# )
-
 print("TracerAnalysis build successfully")
 
 
 # run a single image analysis on the test_img
 print("apply the TracerAnalysis to test tracer image")
 test = analysis_blue.single_image_analysis(tracer_path)
-# test_green = analysis_green.single_image_analysis(tracer_path)
 print("TracerAnalysis ran successful, show result")
 test.show()
-# test_green.show()
