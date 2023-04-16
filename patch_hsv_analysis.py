@@ -1,5 +1,5 @@
 """
-script to analyze a patch of the picture
+script to analyze a patch of the picture to abtain a single signal reduction
 
 it can be used to see the overwritten routine _inspect_diff in
 the tailoredConcentrationAnalysis to inspect the diff and 
@@ -34,38 +34,6 @@ the config file has to contain
 """
 with open(basis_path + "config.json") as json_file:
     config = json.load(json_file)
-
-if False:
-    curvature_correction = da.CurvatureCorrection(config["curvature"])
-    width = config["physical_asset"]["dimensions"]["width"]
-    height = config["physical_asset"]["dimensions"]["height"]
-
-    # Initialize the baseline image (one is enough for this purpose)
-    baseline = da.imread(
-        path=tracer_path,
-        width=width,
-        height=height,
-        # color_space="RGB",
-        transformations=[curvature_correction],
-    )
-    # show the picture to get coodinates of suiting patches / rois
-    # baseline.show("test")
-    fig = plt.figure("baseline image to select roi for colour analysis")
-    plt.imshow(skimage.img_as_float(baseline.img))
-
-    # use matplotlib to print coordinates of roi selected by double clicks
-    def onclick(event):
-        if event.dblclick:
-            print(
-                "double click: xdata=%f, ydata=%f"
-                % (
-                    event.xdata,
-                    event.ydata,
-                )
-            )
-
-    cid = fig.canvas.mpl_connect("button_press_event", onclick)
-    plt.show()
 
 ######################################
 # build tailored signal reduction
@@ -108,7 +76,7 @@ analysis = tTracerAnalysis(
     roi=(slice(2800, 3300), slice(2000, 2500)),
     # slices: first is the pixel range from top to bottom, second from left to right
     # first y slice then x slice ?WARUM?
-    signal_reduction=signal_reduction,
+    signal_reduction=[signal_reduction],
     model=model,
 )
 print("TracerAnalysis build successfully")

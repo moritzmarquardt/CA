@@ -171,47 +171,21 @@ class tConcentrationAnalysis(
             plt.subplot(2, 3, 6)
             plt.imshow(concentration[roi])
 
-    def _inspect_cut(self, img):
-        if self.verbosity >= 1:
-            roi = self.roi
-            img_roi = img[roi]
-            average = np.average(img_roi, axis=0)
-            plt.subplot(2, 1, 1)
-            plt.plot(average)
-            plt.subplot(2, 1, 2)
-            plt.imshow(img_roi)
-
-    def _inspect_roi_hsv(self, img: np.ndarray, bins: int = 100) -> None:
-        """
-        Routine allowing for plotting of intermediate results.
-        Requires overwrite.
-        gets called when concentrationanalysis is calles before smoothing, directly after
-        taking difference between baseline image and test image
+    def _inspect_diff(self, img: np.ndarray) -> None:
+        """gets called after taking the difference of test-baseline
 
         Args:
-            img (np.ndarray): image
+            img (np.ndarray): difference
+
         """
-        if self.roi is not None and self.verbosity >= 2:
+        bins = 100
+        if self.roi is not None:
             roi = self.roi
             img_roi = img[roi]
-
-            plt.figure("roi in diff test-baseline")
-            plt.imshow(img_roi)
-
-            fig, ax = plt.subplots()
-            fig.canvas.manager.set_window_title(roi)
-            ax.imshow(img)
             height = roi[0].stop - roi[0].start
             width = roi[1].stop - roi[1].start
-            rect = patches.Rectangle(
-                (roi[1].start, roi[0].start),
-                width,
-                height,
-                linewidth=1,
-                edgecolor="r",
-                facecolor="none",
-            )
-            ax.add_patch(rect)
+            # plt.figure("roi difference")
+            # plt.imshow(img_roi)
 
             # Extract H, S, V components
             hsv = cv2.cvtColor(img_roi.astype(np.float32), cv2.COLOR_RGB2HSV)
@@ -230,9 +204,45 @@ class tConcentrationAnalysis(
             v_hist = np.histogram(v_img, bins=bins)[0]
 
             # Plot
-            plt.figure("h")
-            plt.plot(h_values, h_hist)
-            plt.figure("s")
-            plt.plot(s_values, s_hist)
-            plt.figure("v")
-            plt.plot(v_values, v_hist)
+            # fig, ax = plt.subplot(2, 2)
+            fig = plt.figure("hsv values of the roi")
+            ax = fig.add_subplot(2, 2, 1)
+            ax.set_title("h")
+            ax.plot(h_values, h_hist)
+            ax = fig.add_subplot(2, 2, 2)
+            ax.set_title("s")
+            ax.plot(s_values, s_hist)
+            ax = fig.add_subplot(2, 2, 3)
+            ax.set_title("v")
+            ax.plot(v_values, v_hist)
+            # image_plus_roi = img
+            # image_plus_roi[0:width, 0:height] = img_roi
+            ax = fig.add_subplot(2, 2, 4)
+            ax.imshow(img)
+            rect = patches.Rectangle(
+                (roi[1].start, roi[0].start),
+                width,
+                height,
+                linewidth=1,
+                edgecolor="r",
+                facecolor="none",
+            )
+            ax.add_patch(rect)
+            ax.set_title(roi)
+
+    def _extract_scalar_information(self, img: np.ndarray) -> np.ndarray:
+        signal = np.zeros_like(img[:, :, 0])
+        weights = [1, 1]  # hard code #TODO parameter for model
+        i = 0
+        plt.figure("signal composition")
+        for signal_reduction in self.signal_reductions:
+            s = signal_reduction(img)
+            signal = signal + weights[i] * s
+            plt.subplot(2, 1, 1)
+            plt.plot(np.average(s[self.roi], axis=0))
+            i = i + 1
+
+        plt.subplot(2, 1, 2)
+        plt.plot(np.average(signal[self.roi], axis=0))
+
+        return signal

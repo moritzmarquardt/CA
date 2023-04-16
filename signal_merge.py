@@ -31,7 +31,7 @@ tracer_config_blue = {
     "color": "hsv",
     "hue lower bound": 0 / 360,
     "hue upper bound": 36 / 360,
-    "saturation lower bound": 0.6,
+    "saturation lower bound": 0,
     "saturation upper bound": 1,
 }
 
@@ -39,9 +39,9 @@ tracer_config_blue = {
 tracer_config_green = {
     "color": "hsv",
     "hue lower bound": 310 / 360,
-    "hue upper bound": 22 / 360,
-    "saturation lower bound": 0.35,
-    "saturation upper bound": 0.6,
+    "hue upper bound": 360 / 360,
+    "saturation lower bound": 0,
+    "saturation upper bound": 1,
 }
 
 
@@ -72,7 +72,7 @@ analysis_blue = tTracerAnalysis(
     baseline=[baseline_path],
     results=Path(basis_path + "results/"),
     update_setup=False,  # chache nicht nutzen und neu schreiben
-    verbosity=2,  # 1 bedeutet, nur cut wird inspiziert
+    verbosity=0,  # 3 bedeutet, nur cut wird inspiziert
     roi=(slice(2550, 2600), slice(0, 5000)),
     signal_reduction=[signal_reduction_blue, signal_reduction_green],
     model=model,
@@ -85,4 +85,4 @@ print("TracerAnalysis build successfully")
 print("apply the TracerAnalysis to test tracer image")
 test = analysis_blue.single_image_analysis(tracer_path)
 print("TracerAnalysis ran successful, show result")
-test.show()
+test.show("test result")
