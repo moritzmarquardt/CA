@@ -65,24 +65,22 @@ model = da.CombinedModel(
 )
 
 #########################################
-print("TracerAnalysis building ...")
-
 analysis_blue = tTracerAnalysis(
     config=Path(basis_path + "config.json"),
     baseline=[baseline_path],
     results=Path(basis_path + "results/"),
     update_setup=False,  # chache nicht nutzen und neu schreiben
-    verbosity=0,  # 3 bedeutet, nur cut wird inspiziert
-    roi=(slice(2550, 2600), slice(0, 5000)),
+    verbosity=0,
+    cut=(slice(2550, 2600), slice(0, 5000)),
     signal_reduction=[signal_reduction_blue, signal_reduction_green],
     model=model,
 )
 
-print("TracerAnalysis build successfully")
-
 
 # run a single image analysis on the test_img
-print("apply the TracerAnalysis to test tracer image")
+# this triggers the cut plot
+# this plot is used to verify the signal merging and modifying
 test = analysis_blue.single_image_analysis(tracer_path)
-print("TracerAnalysis ran successful, show result")
+
+# show the results
 test.show("test result")
