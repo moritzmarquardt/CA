@@ -211,15 +211,15 @@ class tConcentrationAnalysis(
 
         # Extract values
         bins = 100
-        h_values = np.linspace(np.min(h_img), np.max(h_img), bins)
-        s_values = np.linspace(np.min(s_img), np.max(s_img), bins)
-        v_values = np.linspace(np.min(v_img), np.max(v_img), bins)
+        h_values = np.linspace(0, 360, bins)
+        s_values = np.linspace(0, 1, bins)
+        v_values = np.linspace(0, 1, bins)
 
         bins = 100
         # Setup histograms
-        h_hist = np.histogram(h_img, bins=bins)[0]
-        s_hist = np.histogram(s_img, bins=bins)[0]
-        v_hist = np.histogram(v_img, bins=bins)[0]
+        h_hist = np.histogram(h_img, bins=bins, range=(0, 360))[0]
+        s_hist = np.histogram(s_img, bins=bins, range=(0, 1))[0]
+        v_hist = np.histogram(v_img, bins=bins, range=(0, 1))[0]
 
         # Plot
         plt.figure("h")
