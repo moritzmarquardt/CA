@@ -21,7 +21,8 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         results: Union[str, Path],
         update_setup: bool = False,
         verbosity: int = 0,
-        roi: slice = None,
+        patch: slice = None,
+        cut: slice = None,
         signal_reduction: darsia.MonochromaticReduction() = None,
         model: darsia.Model() = None,
     ) -> None:
@@ -37,14 +38,14 @@ class tTracerAnalysis(darsia.TracerAnalysis):
                 routines is emptied.
             verbosity  (bool): flag controlling whether results of the post-analysis
                 are printed to screen; default is False.
-            roi (slice): one slice is lower right corner, the other is upper left
+            patch (slice): one slice is lower right corner, the other is upper left
                 für die inspect routine
                 inspect routine ist in tCA überschrieben und wird nur aufgerufen, wenn
-                roi is not None
+                patch is not None
         """
         # Assign tracer analysis
-        print("hi from init tTracerAnalysis")
-        self.roi = roi
+        self.patch = patch
+        self.cut = cut
         self.signal_reduction = signal_reduction
         self.model = model
         self.verbosity = verbosity
@@ -58,8 +59,6 @@ class tTracerAnalysis(darsia.TracerAnalysis):
         self.path_to_results.parents[0].mkdir(parents=True, exist_ok=True)
 
         # Store verbosity
-
-        print("init of tTracerAnalysis successful")
 
     # ! ---- Analysis tools for detecting the tracer concentration
 
@@ -99,9 +98,9 @@ class tTracerAnalysis(darsia.TracerAnalysis):
             self.model,
             # self.labels,
             verbosity=self.verbosity,
-            roi=self.roi,
+            patch=self.patch,
+            cut=self.cut,
         )
-        print("hi from define tracer analysis finished with" + str(tracer_analysis))
 
         return tracer_analysis
 
@@ -144,105 +143,116 @@ class tConcentrationAnalysis(
         restoration: Optional[darsia.TVD] = None,
         model: darsia.Model = darsia.Identity,
         labels: Optional[np.ndarray] = None,
-        roi: slice = None,
+        patch: slice = None,
+        cut: slice = None,
         **kwargs,
     ) -> None:
         super().__init__(
             base, signal_reduction, balancing, restoration, model, labels, **kwargs
         )
-        self.roi = roi
+        self.patch = patch
+        self.cut = cut
 
-    def _inspect_all_in_roi(
+    def _inspect(
         self, diff, signal, clean_signal, balanced_signal, smooth_signal, concentration
     ):
-        if self.verbosity >= 2:
-            roi = self.roi
-            plt.figure("propgation of the processing")
-            plt.subplot(2, 3, 1)
-            plt.imshow(diff[roi])
-            plt.subplot(2, 3, 2)
-            plt.imshow(signal[roi])
-            plt.subplot(2, 3, 3)
-            plt.imshow(clean_signal[roi])
-            plt.subplot(2, 3, 4)
-            plt.imshow(balanced_signal[roi])
-            plt.subplot(2, 3, 5)
-            plt.imshow(smooth_signal[roi])
-            plt.subplot(2, 3, 6)
-            plt.imshow(concentration[roi])
+        if self.patch is not None:
+            self._inspect_patch(diff, self.patch)
+            # self._inspect_processing(
+            #     diff,
+            #     signal,
+            #     clean_signal,
+            #     balanced_signal,
+            #     smooth_signal,
+            #     concentration,
+            # )
 
-    def _inspect_diff(self, img: np.ndarray) -> None:
+        if self.cut is not None:
+            self._inspect_cut(diff, self.cut, self.signal_reductions)
+
+        plt.show()
+
+    def _inspect_processing(
+        self, diff, signal, clean_signal, balanced_signal, smooth_signal, concentration
+    ):
+        patch = self.patch
+        plt.figure("propgation of the processing")
+        plt.subplot(2, 3, 1)
+        plt.imshow(diff[patch])
+        plt.subplot(2, 3, 2)
+        plt.imshow(signal[patch])
+        plt.subplot(2, 3, 3)
+        plt.imshow(clean_signal[patch])
+        plt.subplot(2, 3, 4)
+        plt.imshow(balanced_signal[patch])
+        plt.subplot(2, 3, 5)
+        plt.imshow(smooth_signal[patch])
+        plt.subplot(2, 3, 6)
+        plt.imshow(concentration[patch])
+
+    def _inspect_patch(self, img: np.ndarray, patch) -> None:
         """gets called after taking the difference of test-baseline
 
         Args:
             img (np.ndarray): difference
 
         """
+        img_patch = img[patch]
+        height = patch[0].stop - patch[0].start
+        width = patch[1].stop - patch[1].start
+        plt.figure("patch difference")
+        plt.imshow(img_patch)
+
+        # Extract H, S, V components
+        hsv = cv2.cvtColor(img_patch.astype(np.float32), cv2.COLOR_RGB2HSV)
+        h_img = hsv[:, :, 0]
+        s_img = hsv[:, :, 1]
+        v_img = hsv[:, :, 2]
+
+        # Extract values
         bins = 100
-        if self.roi is not None:
-            roi = self.roi
-            img_roi = img[roi]
-            height = roi[0].stop - roi[0].start
-            width = roi[1].stop - roi[1].start
-            # plt.figure("roi difference")
-            # plt.imshow(img_roi)
+        h_values = np.linspace(np.min(h_img), np.max(h_img), bins)
+        s_values = np.linspace(np.min(s_img), np.max(s_img), bins)
+        v_values = np.linspace(np.min(v_img), np.max(v_img), bins)
 
-            # Extract H, S, V components
-            hsv = cv2.cvtColor(img_roi.astype(np.float32), cv2.COLOR_RGB2HSV)
-            h_img = hsv[:, :, 0]
-            s_img = hsv[:, :, 1]
-            v_img = hsv[:, :, 2]
+        bins = 100
+        # Setup histograms
+        h_hist = np.histogram(h_img, bins=bins)[0]
+        s_hist = np.histogram(s_img, bins=bins)[0]
+        v_hist = np.histogram(v_img, bins=bins)[0]
 
-            # Extract values
-            h_values = np.linspace(np.min(h_img), np.max(h_img), bins)
-            s_values = np.linspace(np.min(s_img), np.max(s_img), bins)
-            v_values = np.linspace(np.min(v_img), np.max(v_img), bins)
+        # Plot
+        plt.figure("h")
+        plt.plot(h_values, h_hist)
+        plt.figure("s")
+        plt.plot(s_values, s_hist)
+        plt.figure("v")
+        plt.plot(v_values, v_hist)
 
-            # Setup histograms
-            h_hist = np.histogram(h_img, bins=bins)[0]
-            s_hist = np.histogram(s_img, bins=bins)[0]
-            v_hist = np.histogram(v_img, bins=bins)[0]
+        fig, ax = plt.subplots()
+        fig.canvas.manager.set_window_title(str(patch))
+        ax.imshow(img)
+        rect = patches.Rectangle(
+            (patch[1].start, patch[0].start),
+            width,
+            height,
+            linewidth=1,
+            edgecolor="r",
+            facecolor="none",
+        )
+        ax.add_patch(rect)
 
-            # Plot
-            # fig, ax = plt.subplot(2, 2)
-            fig = plt.figure("hsv values of the roi")
-            ax = fig.add_subplot(2, 2, 1)
-            ax.set_title("h")
-            ax.plot(h_values, h_hist)
-            ax = fig.add_subplot(2, 2, 2)
-            ax.set_title("s")
-            ax.plot(s_values, s_hist)
-            ax = fig.add_subplot(2, 2, 3)
-            ax.set_title("v")
-            ax.plot(v_values, v_hist)
-            # image_plus_roi = img
-            # image_plus_roi[0:width, 0:height] = img_roi
-            ax = fig.add_subplot(2, 2, 4)
-            ax.imshow(img)
-            rect = patches.Rectangle(
-                (roi[1].start, roi[0].start),
-                width,
-                height,
-                linewidth=1,
-                edgecolor="r",
-                facecolor="none",
-            )
-            ax.add_patch(rect)
-            ax.set_title(roi)
-
-    def _extract_scalar_information(self, img: np.ndarray) -> np.ndarray:
-        signal = np.zeros_like(img[:, :, 0])
+    def _inspect_cut(self, diff, cut, signal_reductions) -> np.ndarray:
+        signal = np.zeros_like(diff[:, :, 0])
         weights = [1, 1]  # hard code #TODO parameter for model
         i = 0
         plt.figure("signal composition")
-        for signal_reduction in self.signal_reductions:
-            s = signal_reduction(img)
+        for signal_reduction in signal_reductions:
+            s = signal_reduction(diff)
             signal = signal + weights[i] * s
             plt.subplot(2, 1, 1)
-            plt.plot(np.average(s[self.roi], axis=0))
+            plt.plot(np.average(s[cut], axis=0))
             i = i + 1
 
         plt.subplot(2, 1, 2)
-        plt.plot(np.average(signal[self.roi], axis=0))
-
-        return signal
+        plt.plot(np.average(signal[cut], axis=0))
