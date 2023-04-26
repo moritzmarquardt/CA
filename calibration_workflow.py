@@ -29,7 +29,7 @@ with open(basis_path + "config.json") as json_file:
 # config taken from the config file
 tracer_config_blue = {
     "color": "hsv",
-    "hue lower bound": 18 / 360,
+    "hue lower bound": 0 / 360,
     "hue upper bound": 36 / 360,
     "saturation lower bound": 0,
     "saturation upper bound": 1,
@@ -44,18 +44,10 @@ tracer_config_green = {
     "saturation upper bound": 1,
 }
 
-tracer_config_cross = {
-    "color": "hsv",
-    "hue lower bound": 0 / 360,
-    "hue upper bound": 18 / 360,
-    "saturation lower bound": 0,
-    "saturation upper bound": 1,
-}
-
 
 signal_reduction_green = da.MonochromaticReduction(**tracer_config_green)
 signal_reduction_blue = da.MonochromaticReduction(**tracer_config_blue)
-signal_reduction_cross = da.MonochromaticReduction(**tracer_config_cross)
+
 
 ########################################
 # build tailored model
@@ -65,34 +57,51 @@ model_config = {
 }
 
 # Linear model for converting signals to data
-model = da.CombinedModel(
-    [
-        da.LinearModel(key="model ", **model_config),
-        da.ClipModel(**{"min value": 0.0, "max value": 1.0}),
-    ]
-)
+model = da.LinearModel(scaling=1, offset=0)
 
 #########################################
-analysis_blue = tTracerAnalysis(
+analysis = tTracerAnalysis(
     config=Path(basis_path + "config.json"),
     baseline=[baseline_path],
     results=Path(basis_path + "results/"),
     update_setup=False,  # chache nicht nutzen und neu schreiben
-    verbosity=0,
-    cut=(slice(2550, 2600), slice(0, 5000)),
-    signal_reduction=[
-        signal_reduction_blue,
-        signal_reduction_green,
-        signal_reduction_cross,
-    ],
+    verbosity=0,  # 3 bedeutet, nur cut wird inspiziert
+    signal_reduction=[signal_reduction_blue, signal_reduction_green],
     model=model,
 )
 
 
-# run a single image analysis on the test_img
-# this triggers the cut plot
-# this plot is used to verify the signal merging and modifying
-test = analysis_blue.single_image_analysis(tracer_path)
+baseline = da.imread(
+    path=tracer_path,
+    width=config["physical_asset"]["dimensions"]["width"],
+    height=config["physical_asset"]["dimensions"]["height"],
+    transformations=[da.CurvatureCorrection(config["curvature"])],
+)
+tracer_paths = [
+    Path(basis_path + "images/20220914-142627.TIF"),
+    Path(basis_path + "images/20220914-142657.TIF"),
+    Path(basis_path + "images/20220914-142727.TIF"),
+    Path(basis_path + "images/20220914-142757.TIF"),
+    Path(basis_path + "images/20220914-142827.TIF"),
+]
+print("processing images ...")
+calibration_images = [analysis._read(path) for path in tracer_paths]
 
-# show the results
-test.show("test result")
+shape_metadata = baseline.shape_metadata()
+geometry = da.ExtrudedPorousGeometry(
+    depth=config["physical_asset"]["dimensions"]["depth"],
+    porosity=config["physical_asset"]["porosity"],
+    **shape_metadata
+)
+options = {
+    "model_position": 0,  # welches model soll calibriert werden
+    "geometry": geometry,
+    "injection_rate": 500,
+    "initial_guess": [1.0, 0.0],
+    "tol": 1e-1,
+    "maxiter": 100,
+}
+print("calibrating ...")
+calibration = analysis.tracer_analysis.calibrate_model(calibration_images, options)
+# calibrate model uses the objective function of the injection rate mixin of analysis
+print(calibration)

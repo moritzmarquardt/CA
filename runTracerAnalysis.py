@@ -72,7 +72,7 @@ analysis = tTracerAnalysis(
     update_setup=False,  # chache nicht nutzen und neu schreiben
     verbosity=3,
     # inspect_diff_roi=(slice(2800, 3000), slice(3200, 3400)),
-    signal_reduction=signal_reduction,
+    signal_reduction=[signal_reduction],
     model=model,
 )
 print("tracer analysis build successfully")

@@ -7,6 +7,7 @@ from typing import Union, Optional
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import cv2
+from scipy import interpolate
 
 import numpy as np
 
@@ -167,8 +168,9 @@ class tConcentrationAnalysis(
             #     concentration,
             # )
 
-        if self.cut is not None:
-            self._inspect_cut(diff, self.cut, self.signal_reductions)
+        # if self.cut is not None:
+        # self._inspect_cut(diff, self.cut, self.signal_reductions)
+        # self._inspect_patch(diff, self.cut)
 
         plt.show()
 
@@ -229,9 +231,12 @@ class tConcentrationAnalysis(
         plt.figure("v")
         plt.plot(v_values, v_hist)
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(2)
         fig.canvas.manager.set_window_title(str(patch))
-        ax.imshow(img)
+        ax[0].imshow(img)
+        temp_array = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_RGB2HSV)
+        temp_array[:, :, 0] /= 360
+        ax[1].imshow(temp_array)
         rect = patches.Rectangle(
             (patch[1].start, patch[0].start),
             width,
@@ -240,19 +245,73 @@ class tConcentrationAnalysis(
             edgecolor="r",
             facecolor="none",
         )
-        ax.add_patch(rect)
+        ax[0].add_patch(rect)
 
     def _inspect_cut(self, diff, cut, signal_reductions) -> np.ndarray:
-        signal = np.zeros_like(diff[:, :, 0])
-        weights = [1, 1]  # hard code #TODO parameter for model
-        i = 0
+        # habe ich lieber in die signal extraction verlagert um rechenzeit zu sparen
         plt.figure("signal composition")
         for signal_reduction in signal_reductions:
             s = signal_reduction(diff)
-            signal = signal + weights[i] * s
+            s = np.multiply(s, diff[:, :, 1])  # multiply with saturation
             plt.subplot(2, 1, 1)
             plt.plot(np.average(s[cut], axis=0))
-            i = i + 1
 
         plt.subplot(2, 1, 2)
-        plt.plot(np.average(signal[cut], axis=0))
+        merged_signal = np.average(self._extract_scalar_information(diff)[cut], axis=0)
+        plt.plot(merged_signal)
+        # plt.figure("smoothed")
+        # x = np.linspace(0, np.size(merged_signal), np.size(merged_signal))
+        # spline = interpolate.splrep(x, merged_signal, s=1)
+        # plt.plot(x, interpolate.BSpline(*spline)(x))
+        plt.figure("diff saturation")
+        plt.plot(np.average(diff[cut][:, :, 1], axis=0))
+
+    def calibrate_model(self, images: list[darsia.Image], options: dict) -> bool:
+        return super().calibrate_model(images, options)
+
+    def define_objective_function(
+        self,
+        input_images: list[np.ndarray],
+        images_diff: list[np.ndarray],
+        times: list[float],
+        options: dict,
+    ):
+        print("overritten objective function definition")
+        return super().define_objective_function(
+            input_images, images_diff, times, options
+        )
+
+    def _extract_scalar_information(self, diff: np.ndarray) -> np.ndarray:
+        signal = np.zeros_like(diff[:, :, 0])
+        weights = [1, 2, 1.5]  # hard code #TODO parameter for model
+        i = 0
+        sat = diff[:, :, 1]
+        b = 0.2
+        a = 2
+        if self.cut is not None:
+            plt.figure("signal composition")
+            plt.subplot(2, 1, 1)
+        for signal_reduction in self.signal_reductions:
+            s = signal_reduction(diff)
+            if self.cut is not None:
+                plt.plot(np.average(s[self.cut], axis=0))
+            signal = signal + weights[i] * s
+            i = i + 1
+
+        # signal, -a * np.power((b - diff[:, :, 1]), 2) + a * pow(b, 2)
+        # signal = np.multiply(
+        #     signal,
+        #     1 - sat,
+        # )  # influence with saturation
+        # signal = signal + 1 - sat
+        if self.cut is not None:
+            plt.subplot(2, 1, 2)
+            plt.plot(np.average(signal[self.cut], axis=0))
+            # plt.figure("smoothed")
+            # x = np.linspace(0, np.size(merged_signal), np.size(merged_signal))
+            # spline = interpolate.splrep(x, merged_signal, s=1)
+            # plt.plot(x, interpolate.BSpline(*spline)(x))
+            # plt.figure("diff saturation")
+            # plt.plot(np.average(diff[self.cut][:, :, 1], axis=0))
+
+        return signal
