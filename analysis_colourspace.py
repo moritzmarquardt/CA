@@ -10,6 +10,7 @@ import scipy.optimize as spo
 folder = Path("./data/tracer_timeseries/images")
 baseline_path = folder / Path("20220914-142404.TIF")
 image_path = folder / Path("20220914-151727.TIF")
+# image_path = Path(".data/test/singletracer.JPG")
 
 # Setup curvature correction (here only cropping)
 curvature_correction = darsia.CurvatureCorrection(
@@ -29,19 +30,20 @@ transformations = [curvature_correction]
 # Read-in images
 # baseline = darsia.imread(baseline_path, transformations = transformations)
 # image = darsia.imread(image_path, transformations = transformations)
+
 baseline = darsia.imread(baseline_path, transformations=transformations).subregion(
-    voxels=(slice(1400, 2600), slice(2500, 7000))
+    voxels=(slice(2400, 2600), slice(2500, 5000))
 )
 image = darsia.imread(image_path, transformations=transformations).subregion(
-    voxels=(slice(1400, 2600), slice(2500, 7000))
+    voxels=(slice(2400, 2600), slice(2500, 5000))
 )
 
 diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
-# plt.figure("diff")
-# plt.imshow(diff)
+plt.figure("diff")
+plt.imshow(diff)
 
-# plt.figure("img")
-# plt.imshow(skimage.img_as_ubyte(image.img))
+plt.figure("img")
+plt.imshow(skimage.img_as_ubyte(image.img))
 
 diff_neg = diff < 0
 # diff[diff_neg] = 0
@@ -65,16 +67,10 @@ smooth_g = ndi.gaussian_filter1d(g_one_line, sigma=sigma)
 smooth_b = ndi.gaussian_filter1d(b_one_line, sigma=sigma)
 
 # Plot single components
-# plt.figure("rgb")
-# plt.plot(smooth_r, color="red")
-# plt.plot(smooth_g, color="green")
-# plt.plot(smooth_b, color="blue")
-
-
-green_rgb = np.array([0.3125, 0.1647, 0.1913])  # equals concentration 1
-blue_rgb = np.array([0.6693, 0.3575, -0.55])  # consider negative values for blue!
-black_rgb = np.array([0, 0, 0])
-concentration_blue = 0.5  # need expert knowledge
+plt.figure("rgb")
+plt.plot(smooth_r, color="red")
+plt.plot(smooth_g, color="green")
+plt.plot(smooth_b, color="blue")
 
 
 class PHIndicator:
@@ -146,7 +142,7 @@ class PHIndicator:
             np.ndarry: scalar valued array containing identified pH values.
 
         """
-        identifier = self._closest_color_HSV(signal)
+        identifier = self._closest_color_LAB(signal)
         # TODO relate to self.v and identify representative pH value
         # linear model:
 
@@ -156,26 +152,26 @@ class PHIndicator:
         # signal is rgb
         signal = skimage.color.rgb2lab(signal)
         self.c = skimage.color.rgb2lab(self.c)
-        k = lambda x, y: np.inner(x, y) + 0.1
+
+        k = lambda x, y: np.power(np.inner(x, y) + 1, 1)
         x = np.array(self.c)
-        print(x, x.shape)
         y = np.array(self.v)
-        print(y, y.shape)
-        # X = x.transpose() @ x
         X = np.ones(x.shape)
         for i in range(x.shape[0]):
             for j in range(x.shape[1]):
                 X[i, j] = k(x[i], x[j])
-        print(x[1])
-        print(np.inner(x[1], x[1]))
-        print(X, X.shape)
         alpha = np.linalg.solve(X, y)
-        ph = lambda y: np.sum(alpha * k(y, x))
-        print(ph(self.c[1]))
+        print(x, y)
+        print(X)
+        print(alpha)
+        # ph = lambda y: np.sum(alpha * k(y, x))
         ph_image = np.zeros(signal.shape[:2])
         for i in range(signal.shape[0]):
             for j in range(signal.shape[1]):
-                ph_image[i, j] = ph(signal[i, j, :])
+                sum = 0
+                for a in range(x.shape[0]):
+                    sum = sum + alpha[a] * k(signal[i, j, :], x[a])
+                ph_image[i, j] = sum
 
         return ph_image
 
@@ -262,8 +258,18 @@ class PHIndicator:
         return identifier
 
 
+green_rgb = np.array([0.3125, 0.1647, 0.1913])  # equals concentration 1
+blue_rgb = np.array([0.6693, 0.3575, 0])  # TODO consider negative values for blue!
+black_rgb = np.array([0, 0, 0])
+concentration_blue = 0.5  # need expert knowledge
+
 # Convert a discrete ph stripe to a numeric pH indicator.
-pwc = PHIndicator([black_rgb, blue_rgb, green_rgb], [0, concentration_blue, 1])
+pwc = PHIndicator([black_rgb, blue_rgb, green_rgb], [0, 0.9, 1])
+ph_image = pwc.color_to_ph_KERNEL(smooth)
 plt.figure("ph identifier")
-plt.imshow(pwc.color_to_ph_KERNEL(smooth))
+plt.imshow(ph_image)
+plt.figure("cut ph val")
+plt.plot(np.average(ph_image, axis=0))
+print("jaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa daleeeeeeeeeeeeeeeeeeeeeee")
+# plt.imshow(pwc.color_to_ph(smooth))
 plt.show()
