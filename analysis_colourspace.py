@@ -39,13 +39,9 @@ image = darsia.imread(image_path, transformations=transformations).subregion(
 )
 
 diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
-plt.figure("diff")
-plt.imshow(diff)
 
-plt.figure("img")
-plt.imshow(skimage.img_as_ubyte(image.img))
 
-diff_neg = diff < 0
+# diff_neg = diff < 0
 # diff[diff_neg] = 0
 
 
@@ -85,23 +81,6 @@ class PHIndicator:
                 continuous pH stripe.
 
         """
-        # Define samples of the pH strip
-        # s = 50
-        # self.c = skimage.color.rgb2lab(c)
-        # self.v = v
-        # self.fine_c = [
-        #     np.linspace(self.c[0][0], self.c[1][0], s).tolist(),
-        #     np.linspace(self.c[0][1], self.c[1][1], s).tolist(),
-        #     np.linspace(self.c[0][2], self.c[1][2], s).tolist(),
-        # ]
-        # self.fine_c = np.transpose(self.fine_c).reshape((1, s, 3))
-        # print(self.fine_c.shape)
-        # self.fine_v = np.linspace(0, 1, s)
-        # plt.figure("ph stripe")
-        # plt.imshow(skimage.color.lab2rgb(self.fine_c))
-        # plt.show()
-        # self.c = self.fine_c
-        # self.v = self.fine_v
         self.c = c
         self.v = v
         self.num = len(self.v)
@@ -145,33 +124,42 @@ class PHIndicator:
         identifier = self._closest_color_LAB(signal)
         # TODO relate to self.v and identify representative pH value
         # linear model:
-
         return identifier
 
     def color_to_ph_KERNEL(self, signal: np.ndarray) -> np.ndarray:
-        # signal is rgb
+        # signal is rgb, transofrm to lab space because it is uniform and therefore
+        # makes sense to interpolate in
         signal = skimage.color.rgb2lab(signal)
         self.c = skimage.color.rgb2lab(self.c)
 
-        k = lambda x, y: np.power(np.inner(x, y) + 1, 1)
-        x = np.array(self.c)
-        y = np.array(self.v)
-        X = np.ones(x.shape)
+        k = lambda x, y: np.power(np.inner(x, y) + 1, 1)  # define linear kernel
+        x = np.array(self.c)  # data points
+        y = np.array(self.v)  # goal points
+        X = np.ones(x.shape)  # kernel matrix
+        print(x, x.shape)
+        print(y, y.shape)
         for i in range(x.shape[0]):
             for j in range(x.shape[1]):
                 X[i, j] = k(x[i], x[j])
         alpha = np.linalg.solve(X, y)
-        print(x, y)
-        print(X)
-        print(alpha)
-        # ph = lambda y: np.sum(alpha * k(y, x))
+        print(alpha, alpha.shape)
         ph_image = np.zeros(signal.shape[:2])
         for i in range(signal.shape[0]):
             for j in range(signal.shape[1]):
-                sum = 0
-                for a in range(x.shape[0]):
-                    sum = sum + alpha[a] * k(signal[i, j, :], x[a])
-                ph_image[i, j] = sum
+                # sum = 0
+                # for a in range(x.shape[0]):
+                #     sum = sum + alpha[a] * k(signal[i, j, :], x[a])
+                # ph_image[i, j] = sum
+                ph_image[i, j] = np.inner(alpha, k(signal[i, j], x))
+        print(ph_image[0, 0])
+
+        # print(np.inner(alpha, k(signal[0, 0], x)))
+
+        # ph_image = np.fromfunction(
+        #     np.vectorize(lambda i, j: np.inner(alpha, k(signal[i, j], x))),
+        #     signal.shape[:2],
+        #     dtype=float,
+        # )
 
         return ph_image
 
@@ -261,15 +249,26 @@ class PHIndicator:
 green_rgb = np.array([0.3125, 0.1647, 0.1913])  # equals concentration 1
 blue_rgb = np.array([0.6693, 0.3575, 0])  # TODO consider negative values for blue!
 black_rgb = np.array([0, 0, 0])
-concentration_blue = 0.5  # need expert knowledge
+# concentration_blue = 0.5  # need expert knowledge
 
 # Convert a discrete ph stripe to a numeric pH indicator.
 pwc = PHIndicator([black_rgb, blue_rgb, green_rgb], [0, 0.9, 1])
 ph_image = pwc.color_to_ph_KERNEL(smooth)
-plt.figure("ph identifier")
-plt.imshow(ph_image)
+fig = plt.figure()
+fig.suptitle("evolution of signal processing in a subregion")
+ax = plt.subplot(313)
+ax.set_title("ph-identifier")
+ax.imshow(ph_image)
+ax = plt.subplot(312)
+ax.set_title("difference image - baseline")
+ax.imshow(diff)
+ax = plt.subplot(311)
+ax.set_title("original image")
+ax.imshow(skimage.img_as_ubyte(image.img))
+
+
 plt.figure("cut ph val")
 plt.plot(np.average(ph_image, axis=0))
-print("jaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa daleeeeeeeeeeeeeeeeeeeeeee")
+print("daleeeeeeeeeeeeeeeeeeeeeee")
 # plt.imshow(pwc.color_to_ph(smooth))
 plt.show()
