@@ -32,12 +32,19 @@ transformations = [curvature_correction]
 # image = darsia.imread(image_path, transformations=transformations)
 
 baseline = darsia.imread(baseline_path, transformations=transformations).subregion(
-    voxels=(slice(2400, 2600), slice(2500, 5000))
+    voxels=(slice(2400, 2600), slice(2000, 5000))
 )
 image = darsia.imread(image_path, transformations=transformations).subregion(
-    voxels=(slice(2400, 2600), slice(2500, 5000))
+    voxels=(slice(2400, 2600), slice(2000, 5000))
 )
 
+# LAB
+# diff = (
+#     (skimage.color.rgb2lab(baseline.img) - skimage.color.rgb2lab(image.img))
+#     + [0, 128, 128]
+# ) / [100, 255, 255]
+
+# RGB
 diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
 
 # Regularize
@@ -45,31 +52,46 @@ smooth = skimage.restoration.denoise_tv_bregman(
     diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
 )
 
-# Reduce to one line
-r, g, b = cv2.split(smooth)
-r_one_line = np.average(r, axis=0)
-g_one_line = np.average(g, axis=0)
-b_one_line = np.average(b, axis=0)
+plt.figure("smooth")
+plt.imshow(smooth)
 
-# Smooth the signals
+# split the signals
+a, b, c = cv2.split(smooth)
+# reduce to one line and smooth the signals
 sigma = 100
-smooth_r = ndi.gaussian_filter1d(r_one_line, sigma=sigma)
-smooth_g = ndi.gaussian_filter1d(g_one_line, sigma=sigma)
-smooth_b = ndi.gaussian_filter1d(b_one_line, sigma=sigma)
+smooth_a = ndi.gaussian_filter1d(np.average(a, axis=0), sigma=sigma)
+smooth_b = ndi.gaussian_filter1d(np.average(b, axis=0), sigma=sigma)
+smooth_c = ndi.gaussian_filter1d(np.average(c, axis=0), sigma=sigma)
 
 # Plot single components
-plt.figure("rgb")
-plt.plot(smooth_r, color="red")
-plt.plot(smooth_g, color="green")
-plt.plot(smooth_b, color="blue")
+plt.figure("colour space components")
+plt.plot(smooth_a, color="red")
+plt.plot(smooth_b, color="green")
+plt.plot(smooth_c, color="blue")
 
-green_rgb = np.array([0.3125, 0.1647, 0.1913])  # equals concentration 1
-blue_rgb = np.array([0.6693, 0.3575, -0.05])  # TODO consider negative values for blue!
-black_rgb = np.array([0, 0, 0])
+colours = np.array(
+    [
+        [smooth_a[0], smooth_b[0], smooth_c[0]],
+        [smooth_a[2000], smooth_b[2000], smooth_c[2000]],
+        [smooth_a[2999], smooth_b[2999], smooth_c[2999]],
+    ]
+)
+concentrations = np.array([1, 0.95, 0])
+print("colours", colours)
+
+# RGB CHOICE:
+# green_rgb = np.array([0.3125, 0.1647, 0.1913])
+# blue_rgb = np.array([0.6693, 0.3575, -0.05])
+# black_rgb = np.array([0, 0, 0])
+
+# plt.figure("colours")
+# colour = np.ones((10, 10, 3))
+# colour[:, :] = green_rgb
+# plt.imshow(colour)
 # concentration_blue = 0.5  # need expert knowledge
 
 # Convert a discrete ph stripe to a numeric pH indicator.
-pwc = PHIndicator([black_rgb, blue_rgb, green_rgb], [0, 0.9, 1])
+pwc = PHIndicator(colours, concentrations)
 ph_image = pwc.color_to_ph(smooth)
 fig = plt.figure()
 fig.suptitle("evolution of signal processing in a subregion")
@@ -82,6 +104,11 @@ ax.imshow(diff)
 ax = plt.subplot(311)
 ax.set_title("original image")
 ax.imshow(skimage.img_as_ubyte(image.img))
+
+plt.figure("indicator")
+indicator = np.arange(101) / 100
+plt.axis("off")
+plt.imshow([indicator, indicator, indicator, indicator, indicator])
 
 
 plt.figure("cut ph val")
