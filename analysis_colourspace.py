@@ -146,10 +146,6 @@ class PHIndicator:
         ph_image = np.zeros(signal.shape[:2])
         for i in range(signal.shape[0]):
             for j in range(signal.shape[1]):
-                # sum = 0
-                # for a in range(x.shape[0]):
-                #     sum = sum + alpha[a] * k(signal[i, j, :], x[a])
-                # ph_image[i, j] = sum
                 ph_image[i, j] = np.inner(alpha, k(signal[i, j], x))
         print(ph_image[0, 0])
 
@@ -253,7 +249,7 @@ black_rgb = np.array([0, 0, 0])
 
 # Convert a discrete ph stripe to a numeric pH indicator.
 pwc = PHIndicator([black_rgb, blue_rgb, green_rgb], [0, 0.9, 1])
-ph_image = pwc.color_to_ph_KERNEL(smooth)
+ph_image = pwc.color_to_ph(smooth)
 fig = plt.figure()
 fig.suptitle("evolution of signal processing in a subregion")
 ax = plt.subplot(313)
@@ -269,6 +265,5 @@ ax.imshow(skimage.img_as_ubyte(image.img))
 
 plt.figure("cut ph val")
 plt.plot(np.average(ph_image, axis=0))
-print("daleeeeeeeeeeeeeeeeeeeeeee")
 # plt.imshow(pwc.color_to_ph(smooth))
 plt.show()

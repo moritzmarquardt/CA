@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import cv2
 
-# import skimage
+import skimage
 
 import numpy as np
 
@@ -285,30 +285,43 @@ class PHIndicator:
         self.v = v
         self.num = len(self.v)
 
-    def color_to_ph(self, signal: np.ndarray) -> np.ndarray:
+    def color_to_ph(self, signal: np.ndarray, gamma=0.1) -> np.ndarray:
         # signal is rgb, transofrm to lab space because it is uniform and therefore
         # makes sense to interpolate in
         # signal = skimage.color.rgb2lab(signal)
         # self.c = skimage.color.rgb2lab(self.c)
 
-        # k = lambda x, y: np.power(np.inner(x, y) + 1, 1)  # define linear kernel
+        # define linear kernel
         def k(x, y):
             return np.power(np.inner(x, y) + 1, 1)
 
-        x = np.array(self.c)  # data points
+        # define gaussian kernel
+        # def k(x, y):
+        #     return np.exp(-gamma * np.inner(x - y, x - y))
+
+        x = np.array(self.c)  # data points / control points / support points
         y = np.array(self.v)  # goal points
-        X = np.ones(x.shape)  # kernel matrix
+        X = np.ones((x.shape[0], x.shape[0]))  # kernel matrix
         print(x, x.shape)
         print(y, y.shape)
-        # for i in range(x.shape[0]):
-        #     for j in range(x.shape[1]):
-        #         X[i, j] = k(x[i], x[j])
-        X = X + x @ x.transpose()  # scalar product + 1 which is the kernel
+        for i in range(x.shape[0]):
+            for j in range(x.shape[0]):
+                X[i, j] = k(x[i], x[j])
+        # X = X + x @ x.transpose()  # scalar product + 1 which is the kernel
+
         alpha = np.linalg.solve(X, y)
         print(alpha, alpha.shape)
         ph_image = np.zeros(signal.shape[:2])
         for i in range(signal.shape[0]):
             for j in range(signal.shape[1]):
-                ph_image[i, j] = np.inner(alpha, k(signal[i, j], x))
+                sum = 0
+                for n in range(alpha.shape[0]):
+                    sum = sum + alpha[n] * k(signal[i, j], x[n])
+                ph_image[i, j] = sum
         print(ph_image[0, 0])
         return ph_image
+
+    def colour_to_ph_NN(self, signal):
+        # use natural neighbour interpolation as the evolution of the nearest neighbour interpol
+        # thsi could work and is kind of intuitive
+        return 0
