@@ -102,15 +102,15 @@ plt.plot(np.linspace(0, 1, bins), b_hist)
 
 #################################
 # alle patches durch um alle farben für interpol zu retrieven
-patches = [
+pats = [
     diff[50:150, 100:200, :],
     diff[50:150, 1600:1700, :],
     diff[50:150, 2600:2700, :],
 ]
-n = np.shape(patches)[0]  # number of patches
+n = np.shape(pats)[0]  # number of patches
 colours = np.zeros((n, 3))
 i = 0
-for patch in patches:
+for patch in pats:
     r, g, b = cv2.split(patch)
     bins = 100
     # Setup histograms
@@ -167,18 +167,47 @@ smooth = skimage.restoration.denoise_tv_bregman(
     diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
 )
 
+fig, ax = plt.subplots()
+ax.imshow(diff)
+rect = patches.Rectangle(
+    (100, 50),
+    100,
+    100,
+    linewidth=1,
+    edgecolor="r",
+    facecolor="none",
+)
+ax.add_patch(rect)
+rect = patches.Rectangle(
+    (1600, 50),
+    100,
+    100,
+    linewidth=1,
+    edgecolor="r",
+    facecolor="none",
+)
+ax.add_patch(rect)
+rect = patches.Rectangle(
+    (2600, 50),
+    100,
+    100,
+    linewidth=1,
+    edgecolor="r",
+    facecolor="none",
+)
+ax.add_patch(rect)
 
 #################################
 # alle patches durch um alle farben für interpol zu retrieven
-patches = [
+pats = [
     diff[50:150, 100:200, :],
     diff[50:150, 1600:1700, :],
     diff[50:150, 2600:2700, :],
 ]
-n = np.shape(patches)[0]  # number of patches
+n = np.shape(pats)[0]  # number of patches
 colours = np.zeros((n, 3))
 i = 0
-for patch in patches:
+for patch in pats:
     r, g, b = cv2.split(patch)
     bins = 100
     # Setup histograms
