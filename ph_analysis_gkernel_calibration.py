@@ -7,6 +7,12 @@ import cv2
 import scipy.ndimage as ndi
 from ph_tailoredClasses import PHIndicator
 
+"""
+script to get the kernel paramter
+idea: only use two of the three interpolation points and then try different gammas in the gaussian kernel
+then use the gamma that makes the interpolant the closest to the third interpoation point
+"""
+
 folder = Path("./data/tracer_timeseries/images")
 baseline_path = folder / Path("20220914-142404.TIF")
 image_path = folder / Path("20220914-151727.TIF")
@@ -93,10 +99,20 @@ print("colours", colours)
 
 # Convert a discrete ph stripe to a numeric pH indicator.
 pwc = PHIndicator(colours, concentrations)
-ph_image = pwc.color_to_ph(
-    smooth, gamma=10
-)  # gamma value retrieved from ph analysis kernel calibration war bester punk für c=0.95 was
-# physikalisch am meisten sinn ergibt
+test = np.zeros(100)
+g = np.zeros(100)
+i = 0
+for gamma in np.concatenate(
+    [np.linspace(0.001, 0.1, 10), np.linspace(0.1, 2, 5), np.linspace(4, 20, 5)]
+):
+    ph_image = pwc.color_to_ph(signal=smooth, gamma=gamma)
+    test[i] = np.average(ph_image, axis=0)[1000]
+    g[i] = gamma
+    print("actuelle approx. für 0.8: " + str(test[i]) + " with gamma=" + str(gamma))
+    i = i + 1
+plt.figure()
+plt.plot(g, test)
+
 fig = plt.figure()
 fig.suptitle("evolution of signal processing in a subregion")
 ax = plt.subplot(313)
