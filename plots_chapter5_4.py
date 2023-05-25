@@ -53,7 +53,7 @@ smooth = skimage.restoration.denoise_tv_bregman(
     diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
 )
 print("RGB:")
-n, colours = extract_support_points(diff, pats)
+n, colours = extract_support_points(smooth, pats)
 concentrations = np.array([1, 0.9, 0])
 
 
@@ -93,7 +93,7 @@ smooth = skimage.restoration.denoise_tv_bregman(
     diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
 )
 print("LAB:")
-n, colours = extract_support_points(diff, pats)
+n, colours = extract_support_points(smooth, pats)
 concentrations = np.array([1, 0.9, 0])
 
 
