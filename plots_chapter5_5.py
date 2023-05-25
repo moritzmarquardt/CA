@@ -45,32 +45,37 @@ image = darsia.imread(image_path, transformations=transformations).subregion(
 # RGB
 diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
 
+# HSV
+# diff = skimage.color.rgb2hsv(baseline.img) - skimage.color.rgb2hsv(image.img)
+
 # Regularize
 smooth = skimage.restoration.denoise_tv_bregman(
     diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
 )
 
-pats = [
-    (slice(50, 150), slice(100, 200)),
-    (slice(50, 150), slice(1600, 1700)),
-    (slice(50, 150), slice(2600, 2700)),
+samples = [
+    (slice(50, 150), slice(0, 100)),
+    (slice(50, 150), slice(1700, 1800)),
+    (slice(50, 150), slice(2900, 3000)),
 ]
 concentrations = np.array([1, 0.9, 0])
-n, colours = extract_support_points(diff, pats)
+n, colours = extract_support_points(signal=smooth, samples=samples)
 
 # RGB CHOICE:
-# colours = np.array([[0.28, 0.14, 0.2], [0.65, 0.34, 0.0], [0.01, 0.01, 0.0]])
+# colours = np.array([[0.29, 0.15, 0.2], [0.66, 0.35, 0.0], [0.02, 0.01, 0.0]])
 # choice when histo analysis also allows for negative values:
 # colours = np.array([[0.28, 0.14, 0.2], [0.66, 0.34, -0.06], [0.0, 0.0, -0.02]])
 # LAB choice
 # colours = np.array([[0.17, 0.56, 0.48], [0.38, 0.53, 0.75], [0.01, 0.5, 0.5]])
 
 
-def color_to_ph(k, colours, concentrations, signal: np.ndarray) -> np.ndarray:
+def color_to_concentration(
+    k, colours, concentrations, signal: np.ndarray
+) -> np.ndarray:
     # signal is rgb, transofrm to lab space because it is uniform and therefore
     # makes sense to interpolate in
-    signal = skimage.color.rgb2lab(signal)
-    colours = skimage.color.rgb2lab(colours)
+    # signal = skimage.color.rgb2lab(signal)
+    # colours = skimage.color.rgb2lab(colours)
 
     x = np.array(colours)  # data points / control points / support points
     y = np.array(concentrations)  # goal points
@@ -80,35 +85,38 @@ def color_to_ph(k, colours, concentrations, signal: np.ndarray) -> np.ndarray:
             X[i, j] = k(x[i], x[j])
 
     alpha = np.linalg.solve(X, y)
+
+    # Estimator / interpolant
+    def estim(signal):
+        sum = 0
+        for n in range(alpha.shape[0]):
+            sum += alpha[n] * k(signal, x[n])
+        return sum
+
     ph_image = np.zeros(signal.shape[:2])
     for i in range(signal.shape[0]):
         for j in range(signal.shape[1]):
-            sum = 0
-            for n in range(alpha.shape[0]):
-                sum = sum + alpha[n] * k(signal[i, j], x[n])
-            ph_image[i, j] = sum
-    sum = 0
-    for n in range(alpha.shape[0]):
-        sum = sum + alpha[n] * k(colours[1], x[n])
-    print(sum)
+            ph_image[i, j] = estim(signal[i, j])
     return ph_image
 
 
-# define linear kernel
+# define linear kernel shifted to avoid singularities
 def k_lin(x, y):
-    return np.power(np.inner(x, y) + 1, 1)
+    return np.inner(x, y) - 1
 
 
 # define gaussian kernel
-def k_gauss(x, y, gamma=0.00001):
+def k_gauss(x, y, gamma=10):
     return np.exp(-gamma * np.inner(x - y, x - y))
 
 
 # Convert a discrete ph stripe to a numeric pH indicator.
-ph_image = color_to_ph(
+ph_image = color_to_concentration(
     k_lin, colours, concentrations, smooth
 )  # gamma=10 value retrieved from ph analysis kernel calibration war bester punk für c=0.95 was
 # physikalisch am meisten sinn ergibt
+ph_image[ph_image > 1] = 1
+ph_image[ph_image < 0] = 0
 fig = plt.figure()
 fig.suptitle("evolution of signal processing in a subregion")
 ax = plt.subplot(313)
@@ -129,5 +137,6 @@ ax.imshow(skimage.img_as_ubyte(image.img))
 
 plt.figure("cut ph val")
 plt.plot(np.average(ph_image, axis=0))
-# plt.imshow(pwc.color_to_ph(smooth))
+# plt.plot(np.average(ph_image[50:70, :], axis=0))
+# plt.imshow(pwc.color_to_concentration(smooth))
 plt.show()
