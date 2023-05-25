@@ -7,14 +7,14 @@ import cv2
 import matplotlib.patches as patches
 
 
-def extract_support_points(diff, pats):
+def extract_support_points(signal, samples):
     fig, ax = plt.subplots()
-    ax.imshow(diff)
-    n = np.shape(pats)[0]  # number of patches
+    ax.imshow(signal)
+    n = np.shape(samples)[0]  # number of patches
     print("number of support patches: " + str(n))
     colours = np.zeros((n, 3))
     i = 0
-    for p in pats:
+    for p in samples:
         rect = patches.Rectangle(
             (p[1].start, p[0].start),
             p[1].stop - p[1].start,
@@ -26,7 +26,7 @@ def extract_support_points(diff, pats):
         ax.add_patch(rect)
 
         # histo analysis
-        patch = diff[p]
+        patch = signal[p]
         # plt.figure("patch nr. " + str(i))
         # plt.imshow(patch)
 
@@ -36,14 +36,19 @@ def extract_support_points(diff, pats):
         g_hist, b_g = np.histogram(g, bins=bins, range=(-1, 1))
         b_hist, b_b = np.histogram(b, bins=bins, range=(-1, 1))
         char_colour = [
-            b_r[np.argmax(r_hist)],
-            b_g[np.argmax(g_hist)],
-            b_b[np.argmax(b_hist)],
+            (b_r[np.argmax(r_hist)] + b_r[np.argmax(r_hist) + 1]) / 2,
+            (b_g[np.argmax(g_hist)] + b_g[np.argmax(g_hist) + 1]) / 2,
+            (b_b[np.argmax(b_hist)] + b_b[np.argmax(b_hist) + 1]) / 2,
         ]
         colours[i] = char_colour
         # plt.figure("char colour nr." + str(i))
         # plt.imshow(np.ones((100, 100, 3)) * char_colour)
         i = i + 1
+
+    # r, g, b = cv2.split(signal[samples[0]])
+    # plt.figure("hist r für erste colour")
+    # h, b = np.histogram(r, bins=100, range=(-1, 1))
+    # plt.stairs(h, b)
     print("characteristic colours: " + str(colours))
     return n, colours
 
@@ -85,7 +90,7 @@ if __name__ == "__main__":
         diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
     )
     print("RGB:")
-    n, colours = extract_support_points(diff, pats)
+    n, colours = extract_support_points(smooth, pats)
 
     #############################################################################################
     #   LAB LAB LAB LAB LAB LAB LAB LAB LAB
@@ -98,6 +103,6 @@ if __name__ == "__main__":
         diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
     )
     print("LAB:")
-    n, colours = extract_support_points(diff, pats)
+    n, colours = extract_support_points(smooth, pats)
 
     plt.show()
