@@ -55,7 +55,7 @@ smooth = skimage.restoration.denoise_tv_bregman(
 
 samples = [
     (slice(50, 150), slice(0, 100)),
-    (slice(50, 150), slice(1700, 1800)),
+    (slice(50, 150), slice(1500, 1600)),
     (slice(50, 150), slice(2900, 3000)),
 ]
 concentrations = np.array([1, 0.9, 0])
@@ -66,7 +66,7 @@ n, colours = extract_support_points(signal=smooth, samples=samples)
 # choice when histo analysis also allows for negative values:
 # colours = np.array([[0.28, 0.14, 0.2], [0.66, 0.34, -0.06], [0.0, 0.0, -0.02]])
 # LAB choice
-# colours = np.array([[0.17, 0.56, 0.48], [0.38, 0.53, 0.75], [0.01, 0.5, 0.5]])
+# colours = np.array([[0.17, 0.56, 0.48], [0.38, 0.53, 0.75], [0, 0.5, 0.5]])
 
 
 def color_to_concentration(
@@ -102,7 +102,7 @@ def color_to_concentration(
 
 # define linear kernel shifted to avoid singularities
 def k_lin(x, y):
-    return np.inner(x, y) - 1
+    return np.inner(x, y) + 10
 
 
 # define gaussian kernel

@@ -2,7 +2,6 @@ import numpy as np
 import darsia
 import skimage
 from pathlib import Path
-import matplotlib.pyplot as plt
 from plots_chapter5_3 import extract_support_points
 
 folder = Path("./data/tracer_timeseries/images")
