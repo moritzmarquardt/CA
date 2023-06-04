@@ -35,7 +35,23 @@ def extract_support_points(signal, samples):
 
         # histo analysis
         patch = signal[p]
-
+        # print(np.reshape(patch, (10000, 3)).shape)
+        H, edges = np.histogramdd(
+            np.reshape(patch, (10000, 3)), bins=100, range=[(-1, 1), (-1, 1), (-1, 1)]
+        )
+        # print(np.array(edges))
+        # print(H)
+        # print(np.unravel_index(H.argmax(), H.shape))
+        # print(np.unravel_index(H.argmax(), H.shape)[1])
+        # print(edges[0])
+        # print(edges[0][np.unravel_index(H.argmax(), H.shape)[0]])
+        col = [
+            edges[0][np.unravel_index(H.argmax(), H.shape)[0]],
+            edges[1][np.unravel_index(H.argmax(), H.shape)[1]],
+            edges[2][np.unravel_index(H.argmax(), H.shape)[2]],
+        ]
+        colours[i] = col
+        """
         r, g, b = cv2.split(patch)
         bins = 100
         r_hist, b_r = np.histogram(r, bins=bins, range=(-1, 1))
@@ -66,7 +82,7 @@ def extract_support_points(signal, samples):
             # plt.ylabel("absolute frequencies")
 
         # plt.figure("char colour nr." + str(i))
-        # plt.imshow(np.ones((100, 100, 3)) * char_colour)
+        # plt.imshow(np.ones((100, 100, 3)) * char_colour) """
         i = i + 1
 
     # r, g, b = cv2.split(signal[samples[0]])
