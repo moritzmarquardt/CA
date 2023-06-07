@@ -94,8 +94,8 @@ print("colours", colours)
 # Convert a discrete ph stripe to a numeric pH indicator.
 pwc = PHIndicator(colours, concentrations)
 ph_image = pwc.color_to_ph(
-    smooth, gamma=10
-)  # gamma value retrieved from ph analysis kernel calibration war bester punk für c=0.95 was
+    smooth, gamma=1
+)  # gamma=10 value retrieved from ph analysis kernel calibration war bester punk für c=0.95 was
 # physikalisch am meisten sinn ergibt
 fig = plt.figure()
 fig.suptitle("evolution of signal processing in a subregion")

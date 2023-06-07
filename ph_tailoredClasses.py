@@ -15,7 +15,7 @@ import numpy as np
 import darsia
 
 
-class tTracerAnalysis(darsia.TracerAnalysis):
+'''class tTracerAnalysis(darsia.TracerAnalysis):
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
@@ -266,7 +266,7 @@ class tConcentrationAnalysis(
         return super()._convert_signal(signal, diff)
 
     def _subtract_background(self, img: darsia.Image) -> darsia.Image:
-        return self.base.img - img.img
+        return self.base.img - img.img'''
 
 
 class PHIndicator:
