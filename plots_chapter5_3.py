@@ -12,9 +12,10 @@ letters = list(string.ascii_uppercase)
 def extract_support_points(signal, samples):
     # visualise patches
     fig, ax = plt.subplots()
-    ax.imshow(signal)
+    ax.imshow(np.abs(signal))  # visualise abs colours, because relative cols are neg
     ax.set_xlabel("horizontal pixel")
     ax.set_ylabel("vertical pixel")
+
     # double check number of patches
     n = np.shape(samples)[0]  # number of patches
     print("number of support patches: " + str(n))
@@ -23,6 +24,7 @@ def extract_support_points(signal, samples):
     colours = np.zeros((n, 3))
     # enumerate through all patches
     for i, p in enumerate(samples):
+        # visualise patches on image
         rect = patches.Rectangle(
             (p[1].start, p[0].start),
             p[1].stop - p[1].start,
@@ -38,8 +40,12 @@ def extract_support_points(signal, samples):
 
         # histo analysis
         patch = signal[p]
+        flat_image = np.reshape(patch, (10000, 3))  # all pixels in one dimension
+        # patch visualisation
+        # plt.figure("patch" + letters[i])
+        # plt.imshow(np.abs(patch))
         H, edges = np.histogramdd(
-            np.reshape(patch, (10000, 3)), bins=100, range=[(-1, 1), (-1, 1), (-1, 1)]
+            flat_image, bins=100, range=[(-1, 1), (-1, 1), (-1, 1)]
         )
         index = np.unravel_index(H.argmax(), H.shape)
         col = [
@@ -91,7 +97,7 @@ if __name__ == "__main__":
     #############################################################################################
     #   RGB RGB RGB RGB RGB RGB RGB RGB RGB
     #############################################################################################
-    diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
+    diff = skimage.img_as_float(image.img) - skimage.img_as_float(baseline.img)
     # Regularize
     smooth = skimage.restoration.denoise_tv_bregman(
         diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
