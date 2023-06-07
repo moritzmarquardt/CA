@@ -3,7 +3,6 @@ import darsia
 import skimage
 from pathlib import Path
 import matplotlib.pyplot as plt
-import cv2
 import matplotlib.patches as patches
 import string
 
@@ -11,15 +10,19 @@ letters = list(string.ascii_uppercase)
 
 
 def extract_support_points(signal, samples):
+    # visualise patches
     fig, ax = plt.subplots()
     ax.imshow(signal)
     ax.set_xlabel("horizontal pixel")
     ax.set_ylabel("vertical pixel")
+    # double check number of patches
     n = np.shape(samples)[0]  # number of patches
     print("number of support patches: " + str(n))
+
+    # init colour vector
     colours = np.zeros((n, 3))
-    i = 0
-    for p in samples:
+    # enumerate through all patches
+    for i, p in enumerate(samples):
         rect = patches.Rectangle(
             (p[1].start, p[0].start),
             p[1].stop - p[1].start,
@@ -35,60 +38,16 @@ def extract_support_points(signal, samples):
 
         # histo analysis
         patch = signal[p]
-        # print(np.reshape(patch, (10000, 3)).shape)
         H, edges = np.histogramdd(
             np.reshape(patch, (10000, 3)), bins=100, range=[(-1, 1), (-1, 1), (-1, 1)]
         )
-        # print(np.array(edges))
-        # print(H)
-        # print(np.unravel_index(H.argmax(), H.shape))
-        # print(np.unravel_index(H.argmax(), H.shape)[1])
-        # print(edges[0])
-        # print(edges[0][np.unravel_index(H.argmax(), H.shape)[0]])
+        index = np.unravel_index(H.argmax(), H.shape)
         col = [
-            edges[0][np.unravel_index(H.argmax(), H.shape)[0]],
-            edges[1][np.unravel_index(H.argmax(), H.shape)[1]],
-            edges[2][np.unravel_index(H.argmax(), H.shape)[2]],
+            (edges[0][index[0]] + edges[0][index[0] + 1]) / 2,
+            (edges[1][index[1]] + edges[1][index[1] + 1]) / 2,
+            (edges[2][index[2]] + edges[2][index[2] + 1]) / 2,
         ]
         colours[i] = col
-        """
-        r, g, b = cv2.split(patch)
-        bins = 100
-        r_hist, b_r = np.histogram(r, bins=bins, range=(-1, 1))
-        g_hist, b_g = np.histogram(g, bins=bins, range=(-1, 1))
-        b_hist, b_b = np.histogram(b, bins=bins, range=(-1, 1))
-        char_colour = [
-            (b_r[np.argmax(r_hist)] + b_r[np.argmax(r_hist) + 1]) / 2,
-            (b_g[np.argmax(g_hist)] + b_g[np.argmax(g_hist) + 1]) / 2,
-            (b_b[np.argmax(b_hist)] + b_b[np.argmax(b_hist) + 1]) / 2,
-        ]
-        colours[i] = char_colour
-        # if __name__ == "__main__":
-        if i == 0:
-            plt.figure("patch nr. " + str(letters[i]))
-            plt.imshow(patch)
-            plt.figure("histo analysis for " + str(letters[i]))
-            # plt.subplot(1, 3, 1)
-            plt.stairs(r_hist, b_r, label="r channel", color="r")
-            plt.xlabel("values")
-            plt.ylabel("absolute frequencies")
-            # plt.subplot(1, 3, 2)
-            plt.stairs(g_hist, b_g, label="g channel", color="g")
-            # plt.xlabel("channel 2")
-            # plt.ylabel("absolute frequencies")
-            # plt.subplot(1, 3, 3)
-            plt.stairs(b_hist, b_b, label="b channel", color="b")
-            # plt.xlabel("channel 3")
-            # plt.ylabel("absolute frequencies")
-
-        # plt.figure("char colour nr." + str(i))
-        # plt.imshow(np.ones((100, 100, 3)) * char_colour) """
-        i = i + 1
-
-    # r, g, b = cv2.split(signal[samples[0]])
-    # plt.figure("hist r für erste colour")
-    # h, b = np.histogram(r, bins=100, range=(-1, 1))
-    # plt.stairs(h, b)
 
     c = np.abs(colours)
     plt.figure("colour vis in colour space")
