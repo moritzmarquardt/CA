@@ -55,12 +55,12 @@ def extract_support_points(signal, samples):
         ]
         colours[i] = col
 
-    c = np.abs(colours)
-    plt.figure("colour vis in colour space")
-    ax = plt.axes(projection="3d")
-    ax.scatter(colours[:, 0], colours[:, 1], colours[:, 2], c=c)
-    for i, c in enumerate(colours):
-        ax.text(c[0], c[1], c[2], letters[i])
+    # c = np.abs(colours)
+    # plt.figure("colour vis in colour space")
+    # ax = plt.axes(projection="3d")
+    # ax.scatter(colours[:, 0], colours[:, 1], colours[:, 2], c=c)
+    # for i, c in enumerate(colours):
+    #     ax.text(c[0], c[1], c[2], letters[i])
 
     print("characteristic colours: " + str(colours))
     return n, colours
