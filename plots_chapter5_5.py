@@ -56,10 +56,10 @@ smooth = skimage.restoration.denoise_tv_bregman(
 )
 
 samples = [
-    (slice(50, 150), slice(0, 100)),
+    (slice(50, 150), slice(100, 200)),
     # (slice(50, 150), slice(1000, 1100)),
-    (slice(50, 150), slice(1500, 1600)),
-    (slice(50, 150), slice(2900, 3000)),
+    (slice(50, 150), slice(1600, 1700)),
+    (slice(50, 150), slice(2700, 2800)),
 ]
 concentrations = np.array([1, 0.9, 0])
 n, colours = extract_support_points(signal=smooth, samples=samples)
@@ -106,8 +106,8 @@ def color_to_concentration(
 
 
 # define linear kernel shifted to avoid singularities
-def k_lin(x, y):
-    return np.inner(x, y) + 10
+def k_lin(x, y, a=10):
+    return np.inner(x, y) + a
 
 
 # define gaussian kernel
