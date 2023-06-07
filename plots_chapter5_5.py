@@ -38,12 +38,14 @@ image = darsia.imread(image_path, transformations=transformations).subregion(
 
 # LAB
 # diff = (
-#     (skimage.color.rgb2lab(baseline.img) - skimage.color.rgb2lab(image.img))
+#     (skimage.color.rgb2lab(image.img) - skimage.color.rgb2lab(baseline.img))
 #     + [0, 128, 128]
 # ) / [100, 255, 255]
 
 # RGB
-diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
+diff = skimage.img_as_float(image.img) - skimage.img_as_float(baseline.img)
+# diff = -diff
+# diff = (diff - np.min(diff)) / (np.max(diff) - np.min(diff))
 
 # HSV
 # diff = skimage.color.rgb2hsv(baseline.img) - skimage.color.rgb2hsv(image.img)
@@ -55,6 +57,7 @@ smooth = skimage.restoration.denoise_tv_bregman(
 
 samples = [
     (slice(50, 150), slice(0, 100)),
+    # (slice(50, 150), slice(1000, 1100)),
     (slice(50, 150), slice(1500, 1600)),
     (slice(50, 150), slice(2900, 3000)),
 ]
@@ -93,6 +96,8 @@ def color_to_concentration(
             sum += alpha[n] * k(signal, x[n])
         return sum
 
+    # estim = scipy.interpolate.LinearNDInterpolator(colours, concentrations, 0)
+
     ph_image = np.zeros(signal.shape[:2])
     for i in range(signal.shape[0]):
         for j in range(signal.shape[1]):
@@ -106,7 +111,7 @@ def k_lin(x, y):
 
 
 # define gaussian kernel
-def k_gauss(x, y, gamma=10):
+def k_gauss(x, y, gamma=15):
     return np.exp(-gamma * np.inner(x - y, x - y))
 
 
@@ -115,7 +120,15 @@ ph_image = color_to_concentration(
     k_lin, colours, concentrations, smooth
 )  # gamma=10 value retrieved from ph analysis kernel calibration war bester punk für c=0.95 was
 # physikalisch am meisten sinn ergibt
-ph_image[ph_image > 1] = 1
+
+plt.figure("cut ph val")
+plt.plot(np.average(ph_image, axis=0))
+# plt.plot(np.average(ph_image[50:70, :], axis=0))
+# plt.imshow(pwc.color_to_concentration(smooth))
+plt.show()
+
+
+ph_image[ph_image > 1] = 1  # für visualisierung von größer 1 values
 ph_image[ph_image < 0] = 0
 fig = plt.figure()
 fig.suptitle("evolution of signal processing in a subregion")
@@ -133,10 +146,3 @@ ax.imshow(skimage.img_as_ubyte(image.img))
 # indicator = np.arange(101) / 100
 # plt.axis("off")
 # plt.imshow([indicator, indicator, indicator, indicator, indicator])
-
-
-plt.figure("cut ph val")
-plt.plot(np.average(ph_image, axis=0))
-# plt.plot(np.average(ph_image[50:70, :], axis=0))
-# plt.imshow(pwc.color_to_concentration(smooth))
-plt.show()
