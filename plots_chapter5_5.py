@@ -3,7 +3,8 @@ import darsia
 import skimage
 from pathlib import Path
 import matplotlib.pyplot as plt
-from plots_chapter5_3 import extract_support_points
+
+# from plots_chapter5_3 import extract_support_points
 
 folder = Path("./data/tracer_timeseries/images")
 baseline_path = folder / Path("20220914-142404.TIF")
@@ -52,7 +53,7 @@ diff = skimage.img_as_float(image.img) - skimage.img_as_float(baseline.img)
 
 # Regularize
 smooth = skimage.restoration.denoise_tv_bregman(
-    diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
+    diff, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
 )
 
 samples = [
@@ -61,10 +62,11 @@ samples = [
     (slice(50, 150), slice(1600, 1700)),
     (slice(50, 150), slice(2700, 2800)),
 ]
-concentrations = np.array([1, 0.9, 0])
-n, colours = extract_support_points(signal=smooth, samples=samples)
+concentrations = np.array([1, 0.95, 0])
+# n, colours = extract_support_points(signal=smooth, samples=samples)
 
 # RGB CHOICE:
+colours = [[-0.29, -0.15, -0.21], [-0.67, -0.35, 0.05], [-0.01, -0.01, 0.01]]
 # colours = np.array([[0.29, 0.15, 0.2], [0.66, 0.35, 0.0], [0.02, 0.01, 0.0]])
 # choice when histo analysis also allows for negative values:
 # colours = np.array([[0.28, 0.14, 0.2], [0.66, 0.34, -0.06], [0.0, 0.0, -0.02]])
@@ -106,7 +108,7 @@ def color_to_concentration(
 
 
 # define linear kernel shifted to avoid singularities
-def k_lin(x, y, a=10):
+def k_lin(x, y, a=0):
     return np.inner(x, y) + a
 
 
@@ -125,20 +127,19 @@ plt.figure("cut ph val")
 plt.plot(np.average(ph_image, axis=0))
 # plt.plot(np.average(ph_image[50:70, :], axis=0))
 # plt.imshow(pwc.color_to_concentration(smooth))
-plt.show()
 
 
 ph_image[ph_image > 1] = 1  # für visualisierung von größer 1 values
 ph_image[ph_image < 0] = 0
 fig = plt.figure()
 fig.suptitle("evolution of signal processing in a subregion")
-ax = plt.subplot(313)
+ax = plt.subplot(212)
 ax.set_title("ph-identifier")
 ax.imshow(ph_image)
-ax = plt.subplot(312)
-ax.set_title("difference image - baseline")
-ax.imshow(diff)
-ax = plt.subplot(311)
+# ax = plt.subplot(312)
+# ax.set_title("difference image - baseline")
+# ax.imshow(diff)
+ax = plt.subplot(211)
 ax.set_title("original image")
 ax.imshow(skimage.img_as_ubyte(image.img))
 
@@ -146,3 +147,4 @@ ax.imshow(skimage.img_as_ubyte(image.img))
 # indicator = np.arange(101) / 100
 # plt.axis("off")
 # plt.imshow([indicator, indicator, indicator, indicator, indicator])
+plt.show()

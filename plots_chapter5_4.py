@@ -50,7 +50,7 @@ pats = [
 diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
 # Regularize
 smooth = skimage.restoration.denoise_tv_bregman(
-    diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
+    diff, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
 )
 print("RGB:")
 n, colours = extract_support_points(smooth, pats)
@@ -90,7 +90,7 @@ diff = (
     + [0, 128, 128]
 ) / [100, 255, 255]
 smooth = skimage.restoration.denoise_tv_bregman(
-    diff, weight=0.1, eps=1e-4, max_num_iter=100, isotropic=True
+    diff, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
 )
 print("LAB:")
 n, colours = extract_support_points(smooth, pats)

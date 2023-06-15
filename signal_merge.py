@@ -82,8 +82,8 @@ analysis_blue = tTracerAnalysis(
     cut=(slice(2550, 2600), slice(0, 5000)),
     signal_reduction=[
         signal_reduction_blue,
-        signal_reduction_green,
-        signal_reduction_cross,
+        # signal_reduction_green,
+        # signal_reduction_cross,
     ],
     model=model,
 )
