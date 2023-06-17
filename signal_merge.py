@@ -10,7 +10,7 @@ print("hi")
 
 basis_path = "./data/tracer_timeseries/"
 baseline_path = basis_path + "images/20220914-142404.TIF"
-tracer_path = basis_path + "images/20220914-150357.TIF"
+tracer_path = basis_path + "images/20220914-151727.TIF"
 
 
 """
@@ -19,8 +19,8 @@ the config file has to contain
 - curvature correction (here only crop is enough)
 - use cache on or off
 """
-with open(basis_path + "config.json") as json_file:
-    config = json.load(json_file)
+# with open(basis_path + "config.json") as json_file:
+#     config = json.load(json_file)
 
 
 ######################################
@@ -78,12 +78,12 @@ analysis_blue = tTracerAnalysis(
     baseline=[baseline_path],
     results=Path(basis_path + "results/"),
     update_setup=False,  # chache nicht nutzen und neu schreiben
-    verbosity=0,
+    verbosity=3,
     cut=(slice(2550, 2600), slice(0, 5000)),
     signal_reduction=[
         signal_reduction_blue,
-        # signal_reduction_green,
-        # signal_reduction_cross,
+        signal_reduction_green,
+        signal_reduction_cross,
     ],
     model=model,
 )
