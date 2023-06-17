@@ -4,7 +4,7 @@ import skimage
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-# from plots_chapter5_3 import extract_support_points
+from plots_chapter5_3 import extract_support_points
 
 folder = Path("./data/tracer_timeseries/images")
 baseline_path = folder / Path("20220914-142404.TIF")
@@ -42,9 +42,11 @@ image = darsia.imread(image_path, transformations=transformations).subregion(
 #     (skimage.color.rgb2lab(image.img) - skimage.color.rgb2lab(baseline.img))
 #     + [0, 128, 128]
 # ) / [100, 255, 255]
+# colours = [[-0.17, 0.45, 0.51], [-0.39, 0.47, 0.25], [-0.01, 0.51, 0.49]]
 
 # RGB
 diff = skimage.img_as_float(image.img) - skimage.img_as_float(baseline.img)
+# colours = [[-0.29, -0.15, -0.21], [-0.67, -0.35, 0.05], [-0.01, -0.01, 0.01]]
 # diff = -diff
 # diff = (diff - np.min(diff)) / (np.max(diff) - np.min(diff))
 
@@ -58,20 +60,17 @@ smooth = skimage.restoration.denoise_tv_bregman(
 
 samples = [
     (slice(50, 150), slice(100, 200)),
-    # (slice(50, 150), slice(1000, 1100)),
+    (slice(50, 150), slice(400, 500)),
+    (slice(50, 150), slice(600, 700)),
+    (slice(50, 150), slice(800, 900)),
+    (slice(50, 150), slice(1000, 1100)),
+    (slice(50, 150), slice(1200, 1300)),
+    (slice(50, 150), slice(1400, 1500)),
     (slice(50, 150), slice(1600, 1700)),
     (slice(50, 150), slice(2700, 2800)),
 ]
-concentrations = np.array([1, 0.95, 0])
-# n, colours = extract_support_points(signal=smooth, samples=samples)
-
-# RGB CHOICE:
-colours = [[-0.29, -0.15, -0.21], [-0.67, -0.35, 0.05], [-0.01, -0.01, 0.01]]
-# colours = np.array([[0.29, 0.15, 0.2], [0.66, 0.35, 0.0], [0.02, 0.01, 0.0]])
-# choice when histo analysis also allows for negative values:
-# colours = np.array([[0.28, 0.14, 0.2], [0.66, 0.34, -0.06], [0.0, 0.0, -0.02]])
-# LAB choice
-# colours = np.array([[0.17, 0.56, 0.48], [0.38, 0.53, 0.75], [0, 0.5, 0.5]])
+n, colours = extract_support_points(signal=smooth, samples=samples)
+concentrations = np.append(np.linspace(1, 0.9, n - 1), 0)
 
 
 def color_to_concentration(
@@ -113,13 +112,13 @@ def k_lin(x, y, a=0):
 
 
 # define gaussian kernel
-def k_gauss(x, y, gamma=15):
+def k_gauss(x, y, gamma=40):
     return np.exp(-gamma * np.inner(x - y, x - y))
 
 
 # Convert a discrete ph stripe to a numeric pH indicator.
 ph_image = color_to_concentration(
-    k_lin, colours, concentrations, smooth
+    k_gauss, colours, concentrations, smooth
 )  # gamma=10 value retrieved from ph analysis kernel calibration war bester punk für c=0.95 was
 # physikalisch am meisten sinn ergibt
 
