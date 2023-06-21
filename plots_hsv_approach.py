@@ -44,9 +44,9 @@ image = darsia.imread(image_path, transformations=transformations).subregion(
 )
 
 # RGB
-diff = skimage.img_as_float(image.img) - skimage.img_as_float(baseline.img)
+diff = skimage.color.rgb2hsv(image.img) - skimage.color.rgb2hsv(baseline.img)
 diff = -diff  # to comply with the darsia definition
-
+# diff = skimage.color.rgb2hsv(diff)
 # Regularize
 smooth = skimage.restoration.denoise_tv_bregman(
     diff, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
@@ -60,7 +60,7 @@ concentrations = np.array([1, 0.95])
 
 # visualise patches
 fig, ax = plt.subplots()
-ax.imshow(np.abs(smooth))  # visualise abs colours, because relative cols are neg
+ax.imshow(smooth)  # visualise abs colours, because relative cols are neg
 ax.set_xlabel("horizontal pixel")
 ax.set_ylabel("vertical pixel")
 
@@ -86,65 +86,68 @@ for i, p in enumerate(samples):
 
     # histo analysis
     patch = smooth[p]
-    patch = skimage.color.rgb2hsv(patch)
+    # patch = skimage.color.rgb2hsv(patch)
     vals = patch[:, :, 0]
-    h_hist, bins = np.histogram(vals, bins=100, range=(0, 1))
+    h_hist, bins = np.histogram(vals, bins=100, range=(-1, 1))
     plt.figure("h" + letters[i])
     plt.stairs(h_hist, bins)
 
-plt.figure()
-plt.subplot(4, 1, 1)
-plt.xlabel("horizontal pixel")
+
+fig, axes = plt.subplots(2, 1, sharex=True, sharey=True, figsize=(6, 2))
+fig.add_subplot(111, frameon=False)
+plt.tick_params(
+    labelcolor="none", which="both", top=False, bottom=False, left=False, right=False
+)
 plt.ylabel("vertical pixel")
-plt.imshow(smooth)
+plt.xlabel("horizontal pixel")
 
 # SIGNAL split
-# reduction blue:
-hsv = skimage.color.rgb2hsv(smooth)
+# reduction blue: B
+# hsv = skimage.color.rgb2hsv(smooth)
+hsv = np.copy(smooth)
 scalar_blue = hsv[:, :, 2]
 mask_hue = np.logical_and(
-    hsv[:, :, 0] > 0.05,
-    hsv[:, :, 0] < 0.1,
+    hsv[:, :, 0] > -0.5,
+    hsv[:, :, 0] < -0.4,
 )
 scalar_blue[~mask_hue] = 0
-plt.subplot(4, 1, 3)
-plt.xlabel("horizontal pixel")
-plt.ylabel("vertical pixel")
-plt.imshow(scalar_blue, vmin=0, vmax=1)
+# ax1 = fig.add_subplot(211)
+axes[0].imshow(scalar_blue, vmin=0, vmax=1)
 
-# reduction green
-hsv = skimage.color.rgb2hsv(smooth)
+# reduction green A
+# hsv = skimage.color.rgb2hsv(smooth)
+hsv = np.copy(smooth)
 scalar_green = hsv[:, :, 2]
 mask_hue = np.logical_and(
-    hsv[:, :, 0] > 0.9,
-    hsv[:, :, 0] < 0.95,
+    hsv[:, :, 0] > -0.08,
+    hsv[:, :, 0] < -0.04,
 )
 scalar_green[~mask_hue] = 0
-plt.subplot(4, 1, 2)
-plt.xlabel("horizontal pixel")
+# ax2 = fig.add_subplot(212)
+axes[1].imshow(scalar_green, vmin=0, vmax=1)
+
+
+fig, axes = plt.subplots(2, 1, sharex=True, sharey=True, figsize=(6, 2))
+fig.add_subplot(111, frameon=False)
+plt.tick_params(
+    labelcolor="none", which="both", top=False, bottom=False, left=False, right=False
+)
 plt.ylabel("vertical pixel")
-plt.imshow(scalar_green, vmin=0, vmax=1)
-
-plt.subplot(4, 1, 4)
 plt.xlabel("horizontal pixel")
-plt.ylabel("vertical pixel")
-plt.imshow(scalar_blue + scalar_green, vmin=0, vmax=1)
 
-
-plt.figure("cut ph val")
-plt.plot(np.average(scalar_blue + scalar_green, axis=0))
+axes[0].imshow(scalar_blue + scalar_green, vmin=0, vmax=1)
 
 # scale and weight scalar signals
 weighted_signal = (
     scalar_blue / np.max(scalar_blue) * 0.95 + scalar_green / np.max(scalar_green) * 1
 )
-plt.figure("weighted signal")
-plt.imshow(weighted_signal, vmin=0, vmax=1)
-plt.xlabel("horizontal pixel")
-plt.ylabel("vertical pixel")
-plt.figure("cut ph val")
-plt.plot(np.average(weighted_signal, axis=0))
-plt.xlabel("horizontal pixel")
-plt.ylabel("average concentration")
+axes[1].imshow(weighted_signal, vmin=0, vmax=1)
 
+
+# plt.figure("cut ph val")
+# plt.plot(np.average(weighted_signal, axis=0))
+# plt.xlabel("horizontal pixel")
+# plt.ylabel("average concentration")
+# plt.figure("cut ph val")
+# plt.plot(np.average(scalar_blue + scalar_green, axis=0))
 plt.show()

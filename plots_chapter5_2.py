@@ -40,6 +40,8 @@ image = da.imread(image_path, transformations=transformations).subregion(
 
 plt.figure()
 plt.imshow(skimage.img_as_float(image.img))
+plt.xlabel("horizontal pixel")
+plt.ylabel("vertical pixel")
 
 fig, ax = plt.subplots()
 ax.imshow(skimage.img_as_float(image_full.img))
@@ -52,5 +54,7 @@ rect = patches.Rectangle(
     facecolor="none",
 )
 ax.add_patch(rect)
+ax.set_xlabel("horizontal pixel")
+ax.set_ylabel("vertical pixel")
 
 plt.show()

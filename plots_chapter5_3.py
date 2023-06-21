@@ -158,14 +158,14 @@ if __name__ == "__main__":
     #############################################################################################
     #   LAB LAB LAB LAB LAB LAB LAB LAB LAB
     #############################################################################################
-    # diff = (
-    #     (skimage.color.rgb2lab(baseline.img) - skimage.color.rgb2lab(image.img))
-    #     + [0, 128, 128]
-    # ) / [100, 255, 255]
-    # smooth = skimage.restoration.denoise_tv_bregman(
-    #     diff, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
-    # )
-    # print("LAB:")
-    # n, colours = extract_support_points(smooth, pats)
+    diff = (
+        (skimage.color.rgb2lab(image.img) - skimage.color.rgb2lab(baseline.img))
+        + [0, 128, 128]
+    ) / [100, 255, 255]
+    smooth = skimage.restoration.denoise_tv_bregman(
+        diff, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
+    )
+    print("LAB:")
+    n, colours = extract_support_points(smooth, pats)
 
     plt.show()

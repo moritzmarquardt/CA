@@ -11,7 +11,8 @@ or onother colour space for a good signal reduction.
 """
 import darsia as da
 from tailoredClasses import tTracerAnalysis
-import json
+
+# import json
 from pathlib import Path
 
 print("hi")
@@ -21,7 +22,7 @@ basis_path = "./data/tracer_timeseries/"
 baseline_path = basis_path + "images/20220914-142404.TIF"
 # picture with tracer present; ideally with big concentration
 # gradients to allow for more detailed analysis
-tracer_path = basis_path + "images/20220914-150357.TIF"
+tracer_path = basis_path + "images/20220914-151727.TIF"
 
 
 """
@@ -30,17 +31,17 @@ the config file has to contain
 - curvature correction (here only crop is enough)
 - use cache on or off
 """
-with open(basis_path + "config.json") as json_file:
-    config = json.load(json_file)
+# with open(basis_path + "config.json") as json_file:
+#     config = json.load(json_file)
 
 # build tailored signal reduction
 
 # modify the tracer analysis based on the hsv plots of the patch analysis
 tracer_config = {
     "color": "hsv",
-    "hue lower bound": 340 / 360,
+    "hue lower bound": 18 / 360,
     "hue upper bound": 36 / 360,
-    "saturation lower bound": 0.4,
+    "saturation lower bound": 0,
     "saturation upper bound": 1,
 }
 signal_reduction = da.MonochromaticReduction(**tracer_config)
@@ -68,7 +69,8 @@ analysis = tTracerAnalysis(
     # if patch is defined, it triggers the patch analysis plots
     # those are hsv analysis of the patch and
     # a full sized picture of the image to select the roi
-    patch=(slice(2800, 3300), slice(2000, 2500)),
+    # patch=(slice(3000, 3200), slice(3600, 3800)), #blue patch
+    patch=(slice(2200, 2400), slice(1800, 2000)),  # green patch
     # slices: first is the pixel range from top to bottom, second from left to right
     # first y slice then x slice ?WARUM?
     signal_reduction=[signal_reduction],

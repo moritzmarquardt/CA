@@ -3,6 +3,10 @@ import darsia
 import skimage
 from pathlib import Path
 from plots_chapter5_3 import extract_support_points
+import scipy.optimize as so
+import time
+
+start = time.time
 
 folder = Path("./data/tracer_timeseries/images")
 baseline_path = folder / Path("20220914-142404.TIF")
@@ -36,13 +40,13 @@ image = darsia.imread(image_path, transformations=transformations).subregion(
 )
 
 # LAB
-# diff = (
-#     (skimage.color.rgb2lab(baseline.img) - skimage.color.rgb2lab(image.img))
-#     + [0, 128, 128]
-# ) / [100, 255, 255]
+diff = (
+    (skimage.color.rgb2lab(baseline.img) - skimage.color.rgb2lab(image.img))
+    + [0, 128, 128]
+) / [100, 255, 255]
 
 # RGB
-diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
+# diff = skimage.img_as_float(baseline.img) - skimage.img_as_float(image.img)
 
 # Regularize
 smooth = skimage.restoration.denoise_tv_bregman(
@@ -50,14 +54,18 @@ smooth = skimage.restoration.denoise_tv_bregman(
 )
 
 samples = [
-    (slice(50, 150), slice(0, 100)),
-    (slice(50, 150), slice(500, 600)),
-    (slice(50, 150), slice(1000, 1100)),
-    (slice(50, 150), slice(1500, 1600)),
-    (slice(50, 150), slice(2900, 3000)),
+    (slice(50, 150), slice(100, 200)),
+    # (slice(50, 150), slice(400, 500)),
+    # (slice(50, 150), slice(600, 700)),
+    # (slice(50, 150), slice(800, 900)),
+    # (slice(50, 150), slice(1000, 1100)),
+    # (slice(50, 150), slice(1200, 1300)),
+    # (slice(50, 150), slice(1400, 1500)),
+    (slice(50, 150), slice(1600, 1700)),
+    (slice(50, 150), slice(2700, 2800)),
 ]
-concentrations = np.array([1, 0.95, 0.9, 0.85, 0])
 n, colours = extract_support_points(signal=smooth, samples=samples)
+concentrations = np.append(np.linspace(1, 0.9, n - 1), 0)
 
 
 def color_to_concentration(
@@ -91,10 +99,27 @@ def color_to_concentration(
     return ph_image
 
 
-for g in [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 9, 9.5, 10, 10.5, 11, 20, 30]:
+# for g in [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 9, 9.5, 10, 10.5, 11, 20, 30, 40, 50]:
 
-    def k_gauss(x, y, gamma=g):
+#     def k_gauss(x, y, gamma=g):
+#         return np.exp(-gamma * np.inner(x - y, x - y))
+
+#     ph_image = color_to_concentration(k_gauss, colours, concentrations, smooth)
+#     print(g, np.average(ph_image[80:120, 1000:1040]))
+
+
+def objective_function(gamma):
+    def k_gauss(x, y, gamma=gamma):
         return np.exp(-gamma * np.inner(x - y, x - y))
 
     ph_image = color_to_concentration(k_gauss, colours, concentrations, smooth)
-    print(g, np.average(ph_image[80:120, 1200:1240]))
+    # print(g, np.average(ph_image[80:120, 1000:1040]))
+
+    return np.abs(0.95 - np.average(ph_image[80:120, 1000:1040]))
+
+
+# + np.abs(0.975 - np.average(ph_image[80:120, 500:540]))
+
+
+res = so.minimize_scalar(objective_function, bounds=(1, 100))
+print(res)

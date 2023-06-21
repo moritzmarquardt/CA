@@ -18,4 +18,6 @@ analytical_solution = 0.5 * spsp.erfc(
 )
 
 plt.plot(xaxis, analytical_solution)
+plt.xlabel("x-coordinate")
+plt.ylabel("concentration c(x,t=1)")
 plt.show()
