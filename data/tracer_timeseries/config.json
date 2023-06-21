@@ -13,29 +13,12 @@
 
     "curvature": {
         "crop": {
-            "pts_src": [
-                [
-                    380,
-                    530
-                ],
-                [
-                    340,
-                    4350
-                ],
-                [
-                    7540,
-                    4310
-                ],
-                [
-                    7500,
-                    480
-                ]
-            ],
+            "pts_src": [[300, 600], [300, 4300], [7600, 4300], [7600, 600]],
             "width": 0.92,
             "height": 0.555,
             "in meters": true
         },
-        "use_cache": true
+        "use_cache": false
     },
     "tracer": {
         "cleaning_filter": "cache/cleaning_filter.npy",

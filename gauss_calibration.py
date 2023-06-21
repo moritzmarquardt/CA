@@ -1,43 +1,11 @@
 import numpy as np
-import darsia
 import skimage
-from pathlib import Path
-from plots_chapter5_3 import extract_support_points
+from extract_support_points import extract_support_points
 import scipy.optimize as so
-import time
 
-start = time.time
+from model_experiment import model_experiment
 
-folder = Path("./data/tracer_timeseries/images")
-baseline_path = folder / Path("20220914-142404.TIF")
-image_path = folder / Path("20220914-151727.TIF")
-# image_path = Path(".data/test/singletracer.JPG")
-
-# Setup curvature correction (here only cropping)
-curvature_correction = darsia.CurvatureCorrection(
-    config={
-        "crop": {
-            # Define the pixel values (x,y) of the corners of the ROI.
-            # Start at top left corner and then continue counterclockwise.
-            "pts_src": [[300, 600], [300, 4300], [7600, 4300], [7600, 600]],
-            # Specify the true dimensions of the reference points
-            "width": 0.92,
-            "height": 0.5,
-        }
-    }
-)
-transformations = [curvature_correction]
-
-# Read-in images
-# baseline = darsia.imread(baseline_path, transformations=transformations)
-# image = darsia.imread(image_path, transformations=transformations)
-
-baseline = darsia.imread(baseline_path, transformations=transformations).subregion(
-    voxels=(slice(2300, 2500), slice(2200, 5200))
-)
-image = darsia.imread(image_path, transformations=transformations).subregion(
-    voxels=(slice(2300, 2500), slice(2200, 5200))
-)
+baseline, image = model_experiment()
 
 # LAB
 diff = (

@@ -1,52 +1,19 @@
 import numpy as np
-import darsia
 import skimage
 import skimage.color
-from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import string
+from model_experiment import model_experiment
 
 letters = list(string.ascii_uppercase)
+baseline, image = model_experiment()
 
-
-# from plots_chapter5_3 import extract_support_points
-
-folder = Path("./data/tracer_timeseries/images")
-baseline_path = folder / Path("20220914-142404.TIF")
-image_path = folder / Path("20220914-151727.TIF")
-# image_path = Path(".data/test/singletracer.JPG")
-
-# Setup curvature correction (here only cropping)
-curvature_correction = darsia.CurvatureCorrection(
-    config={
-        "crop": {
-            # Define the pixel values (x,y) of the corners of the ROI.
-            # Start at top left corner and then continue counterclockwise.
-            "pts_src": [[300, 600], [300, 4300], [7600, 4300], [7600, 600]],
-            # Specify the true dimensions of the reference points
-            "width": 0.92,
-            "height": 0.5,
-        }
-    }
-)
-transformations = [curvature_correction]
-
-# Read-in images
-# baseline = darsia.imread(baseline_path, transformations=transformations)
-# image = darsia.imread(image_path, transformations=transformations)
-
-baseline = darsia.imread(baseline_path, transformations=transformations).subregion(
-    voxels=(slice(2300, 2500), slice(2200, 5200))
-)
-image = darsia.imread(image_path, transformations=transformations).subregion(
-    voxels=(slice(2300, 2500), slice(2200, 5200))
-)
 
 # RGB
 diff = skimage.color.rgb2hsv(image.img) - skimage.color.rgb2hsv(baseline.img)
 diff = -diff  # to comply with the darsia definition
-# diff = skimage.color.rgb2hsv(diff)
+
 # Regularize
 smooth = skimage.restoration.denoise_tv_bregman(
     diff, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
@@ -56,7 +23,7 @@ samples = [
     (slice(50, 150), slice(100, 200)),
     (slice(50, 150), slice(1600, 1700)),
 ]
-concentrations = np.array([1, 0.95])
+concentrations = np.array([1, 0.9])
 
 # visualise patches
 fig, ax = plt.subplots()
@@ -139,7 +106,7 @@ axes[0].imshow(scalar_blue + scalar_green, vmin=0, vmax=1)
 
 # scale and weight scalar signals
 weighted_signal = (
-    scalar_blue / np.max(scalar_blue) * 0.95 + scalar_green / np.max(scalar_green) * 1
+    scalar_blue / np.max(scalar_blue) * 0.9 + scalar_green / np.max(scalar_green) * 1
 )
 axes[1].imshow(weighted_signal, vmin=0, vmax=1)
 

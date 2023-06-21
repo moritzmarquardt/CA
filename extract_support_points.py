@@ -1,61 +1,11 @@
 import numpy as np
-import darsia
 import skimage
-from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import string
+from model_experiment import model_experiment
 
 letters = list(string.ascii_uppercase)
-
-
-def histogram3dplot(h, e, fig=None):
-    """
-    Visualize a 3D histogram
-
-    Parameters
-    ----------
-
-    h: histogram array of shape (M,N,O)
-    e: list of bin edge arrays (for R, G and B)
-    """
-    M, N, Oa = h.shape
-    idxR = np.arange(M)
-    idxG = np.arange(N)
-    idxB = np.arange(Oa)
-
-    R, G, B = np.meshgrid(idxR, idxG, idxB)
-    a = np.diff(e[0])[0]
-    b = a / 2
-    R = a * R + b
-
-    a = np.diff(e[1])[0]
-    b = a / 2
-    G = a * G + b
-
-    a = np.diff(e[2])[0]
-    b = a / 2
-    B = a * B + b
-
-    colors = np.vstack((R.flatten(), G.flatten(), B.flatten())).T / 255
-    h = h / np.sum(h)
-    if fig is not None:
-        f = plt.figure(fig)
-    else:
-        f = plt.gcf()
-    ax = f.add_subplot(111, projection="3d")
-    mxbins = np.array([M, N, Oa]).max()
-    ax.scatter(
-        R.flatten(),
-        G.flatten(),
-        B.flatten(),
-        s=h.flatten() * (256 / mxbins) ** 3 / 2,
-        c=colors,
-    )
-
-    ax.set_xlabel("Red")
-    ax.set_ylabel("Green")
-    ax.set_zlabel("Blue")
 
 
 def extract_support_points(signal, samples):
@@ -105,43 +55,31 @@ def extract_support_points(signal, samples):
         ]
         colours[i] = col
 
-    # c = np.abs(colours)
-    # plt.figure("colour vis in colour space")
-    # ax = plt.axes(projection="3d")
-    # ax.scatter(colours[:, 0], colours[:, 1], colours[:, 2], c=c)
-    # for i, c in enumerate(colours):
-    #     ax.text(c[0], c[1], c[2], letters[i])
+    c = np.abs(colours)
+    plt.figure()
+    ax = plt.axes(projection="3d")
+    ax.scatter(colours[:, 0], colours[:, 1], colours[:, 2], c=c)
+    for i, c in enumerate(colours):
+        ax.text(c[0], c[1], c[2], letters[i])
 
     print("characteristic colours: " + str(colours))
     return n, colours
 
 
 if __name__ == "__main__":
-    folder = Path("./data/tracer_timeseries/images")
-    baseline_path = folder / Path("20220914-142404.TIF")
-    image_path = folder / Path("20220914-151727.TIF")
-    curvature_correction = darsia.CurvatureCorrection(
-        config={
-            "crop": {
-                "pts_src": [[300, 600], [300, 4300], [7600, 4300], [7600, 600]],
-                "width": 0.92,
-                "height": 0.5,
-            }
-        }
-    )
-    transformations = [curvature_correction]
-    baseline = darsia.imread(baseline_path, transformations=transformations).subregion(
-        voxels=(slice(2300, 2500), slice(2200, 5200))
-    )
-    image = darsia.imread(image_path, transformations=transformations).subregion(
-        voxels=(slice(2300, 2500), slice(2200, 5200))
-    )
+    baseline, image = model_experiment()
 
     # define support colours based on patches in the image that are representative for that colour
     pats = [
         (slice(50, 150), slice(100, 200)),
+        # (slice(50, 150), slice(400, 500)),
+        # (slice(50, 150), slice(600, 700)),
+        # (slice(50, 150), slice(800, 900)),
+        # (slice(50, 150), slice(1000, 1100)),
+        # (slice(50, 150), slice(1200, 1300)),
+        # (slice(50, 150), slice(1400, 1500)),
         (slice(50, 150), slice(1600, 1700)),
-        (slice(50, 150), slice(2600, 2700)),
+        (slice(50, 150), slice(2700, 2800)),
     ]
 
     #############################################################################################
@@ -154,6 +92,7 @@ if __name__ == "__main__":
     )
     print("RGB:")
     n, colours = extract_support_points(smooth, pats)
+    plt.show()
 
     #############################################################################################
     #   LAB LAB LAB LAB LAB LAB LAB LAB LAB

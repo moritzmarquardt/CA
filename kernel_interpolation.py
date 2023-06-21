@@ -1,68 +1,30 @@
 import numpy as np
-import darsia
 import skimage
-from pathlib import Path
 import matplotlib.pyplot as plt
+from extract_support_points import extract_support_points
+from model_experiment import model_experiment
 
-from plots_chapter5_3 import extract_support_points
-
-folder = Path("./data/tracer_timeseries/images")
-baseline_path = folder / Path("20220914-142404.TIF")
-image_path = folder / Path("20220914-151727.TIF")
-# image_path = Path(".data/test/singletracer.JPG")
-
-# Setup curvature correction (here only cropping)
-curvature_correction = darsia.CurvatureCorrection(
-    config={
-        "crop": {
-            # Define the pixel values (x,y) of the corners of the ROI.
-            # Start at top left corner and then continue counterclockwise.
-            "pts_src": [[300, 600], [300, 4300], [7600, 4300], [7600, 600]],
-            # Specify the true dimensions of the reference points
-            "width": 0.92,
-            "height": 0.5,
-        }
-    }
-)
-transformations = [curvature_correction]
-
-# Read-in images
-# baseline = darsia.imread(baseline_path, transformations=transformations)
-# image = darsia.imread(image_path, transformations=transformations)
-
-baseline = darsia.imread(baseline_path, transformations=transformations).subregion(
-    voxels=(slice(2300, 2500), slice(2200, 5200))
-)
-image = darsia.imread(image_path, transformations=transformations).subregion(
-    voxels=(slice(2300, 2500), slice(2200, 5200))
-)
+baseline, image = model_experiment()
 
 # LAB
-diff = (
+diff_LAB = (
     (skimage.color.rgb2lab(image.img) - skimage.color.rgb2lab(baseline.img))
     + [0, 128, 128]
 ) / [100, 255, 255]
-# colours = [[-0.17, 0.45, 0.51], [-0.39, 0.47, 0.25], [-0.01, 0.51, 0.49]]
 
 # RGB
-# diff = skimage.img_as_float(image.img) - skimage.img_as_float(baseline.img)
-# colours = [[-0.29, -0.15, -0.21], [-0.67, -0.35, 0.05], [-0.01, -0.01, 0.01]]
-# diff = -diff
-# diff = (diff - np.min(diff)) / (np.max(diff) - np.min(diff))
+diff_RGB = skimage.img_as_float(image.img) - skimage.img_as_float(baseline.img)
 
 # HSV
 # diff = skimage.color.rgb2hsv(baseline.img) - skimage.color.rgb2hsv(image.img)
 
 # Regularize
-smooth = skimage.restoration.denoise_tv_bregman(
-    diff, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
+smooth_RGB = skimage.restoration.denoise_tv_bregman(
+    diff_RGB, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
 )
-
-# plt.figure()
-# plt.imshow(np.abs(smooth))
-# plt.xlabel("horizontal pixel")
-# plt.ylabel("vertical pixel")
-# plt.show()
+smooth_LAB = skimage.restoration.denoise_tv_bregman(
+    diff_LAB, weight=0.025, eps=1e-4, max_num_iter=100, isotropic=True
+)
 
 samples = [
     (slice(50, 150), slice(100, 200)),
@@ -75,7 +37,8 @@ samples = [
     (slice(50, 150), slice(1600, 1700)),
     (slice(50, 150), slice(2700, 2800)),
 ]
-n, colours = extract_support_points(signal=smooth, samples=samples)
+n, colours_RGB = extract_support_points(signal=smooth_RGB, samples=samples)
+n, colours_LAB = extract_support_points(signal=smooth_LAB, samples=samples)
 concentrations = np.append(np.linspace(1, 0.9, n - 1), 0)
 
 
@@ -118,13 +81,13 @@ def k_lin(x, y, a=0):
 
 
 # define gaussian kernel
-def k_gauss(x, y, gamma=24.2242494195):
+def k_gauss(x, y, gamma=10):
     return np.exp(-gamma * np.inner(x - y, x - y))
 
 
 # Convert a discrete ph stripe to a numeric pH indicator.
 ph_image = color_to_concentration(
-    k_gauss, colours, concentrations, smooth
+    k_gauss, colours_RGB, concentrations, smooth_RGB
 )  # gamma=10 value retrieved from ph analysis kernel calibration war bester punk für c=0.95 was
 # physikalisch am meisten sinn ergibt
 

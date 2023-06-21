@@ -231,12 +231,14 @@ class tConcentrationAnalysis(
         plt.figure("v")
         plt.plot(v_values, v_hist)
 
-        fig, ax = plt.subplots(2)
+        fig, ax = plt.subplots(1)
         fig.canvas.manager.set_window_title(str(patch))
-        ax[0].imshow(img)
-        temp_array = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_RGB2HSV)
-        temp_array[:, :, 0] /= 360
-        ax[1].imshow(temp_array)
+        ax.imshow(img)
+        ax.set_xlabel("horizontal pixel")
+        ax.set_ylabel("vertical pixel")
+        # temp_array = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_RGB2HSV)
+        # temp_array[:, :, 0] /= 360
+        # ax[1].imshow(temp_array)
         rect = patches.Rectangle(
             (patch[1].start, patch[0].start),
             width,
@@ -245,7 +247,7 @@ class tConcentrationAnalysis(
             edgecolor="r",
             facecolor="none",
         )
-        ax[0].add_patch(rect)
+        ax.add_patch(rect)
 
     def _inspect_cut(self, diff, cut, signal_reductions) -> np.ndarray:
         # habe ich lieber in die signal extraction verlagert um rechenzeit zu sparen
@@ -283,7 +285,8 @@ class tConcentrationAnalysis(
 
     def _extract_scalar_information(self, diff: np.ndarray) -> np.ndarray:
         signal = np.zeros_like(diff[:, :, 0])
-        weights = [1, 2, 1.5]  # hard code #TODO parameter for model
+        # weights = [1, 2, 1.5]  # hard code #TODO parameter for model
+        weights = [0.9, 2, 1.5]
         i = 0
         sat = diff[:, :, 1]
         b = 0.2
