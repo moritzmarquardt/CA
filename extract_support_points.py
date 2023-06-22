@@ -32,9 +32,10 @@ def extract_support_points(signal, samples):
             edgecolor="w",
             facecolor="none",
         )
-        ax.text(
-            p[1].start + 130, p[0].start + 100, letters[i], fontsize=15, color="white"
-        )
+        # ax.text(
+        #     p[1].start + 130, p[0].start + 100, letters[i], fontsize=15, color="white"
+        # )
+        ax.text(p[1].start + 5, p[0].start + 95, letters[i], fontsize=12, color="white")
         ax.add_patch(rect)
 
         # histo analysis
@@ -72,12 +73,12 @@ if __name__ == "__main__":
     # define support colours based on patches in the image that are representative for that colour
     pats = [
         (slice(50, 150), slice(100, 200)),
-        # (slice(50, 150), slice(400, 500)),
-        # (slice(50, 150), slice(600, 700)),
-        # (slice(50, 150), slice(800, 900)),
-        # (slice(50, 150), slice(1000, 1100)),
-        # (slice(50, 150), slice(1200, 1300)),
-        # (slice(50, 150), slice(1400, 1500)),
+        (slice(50, 150), slice(400, 500)),
+        (slice(50, 150), slice(600, 700)),
+        (slice(50, 150), slice(800, 900)),
+        (slice(50, 150), slice(1000, 1100)),
+        (slice(50, 150), slice(1200, 1300)),
+        (slice(50, 150), slice(1400, 1500)),
         (slice(50, 150), slice(1600, 1700)),
         (slice(50, 150), slice(2700, 2800)),
     ]

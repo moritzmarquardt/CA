@@ -56,22 +56,22 @@ if __name__ == "__main__":
     plt.figure("corrected tracer image")
     plt.imshow(skimage.img_as_ubyte(image.img))
     plt.xlabel("horizontal pixel")
-    plt.ylabel("concentration")
+    plt.ylabel("vertical pixel")
 
     plt.figure("corrected baseline image")
     plt.imshow(skimage.img_as_ubyte(baseline.img))
     plt.xlabel("horizontal pixel")
-    plt.ylabel("concentration")
+    plt.ylabel("vertical pixel")
 
     plt.figure("corrected tracer image full")
     plt.imshow(skimage.img_as_ubyte(image_full.img))
     plt.xlabel("horizontal pixel")
-    plt.ylabel("concentration")
+    plt.ylabel("vertical pixel")
 
     plt.figure("corrected baseline image full")
     plt.imshow(skimage.img_as_ubyte(baseline_full.img))
     plt.xlabel("horizontal pixel")
-    plt.ylabel("concentration")
+    plt.ylabel("vertical pixel")
 
     fig, ax = plt.subplots()
     ax.imshow(skimage.img_as_float(image_full.img))

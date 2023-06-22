@@ -57,6 +57,8 @@ def closest_color_RGB(signal: np.ndarray) -> np.ndarray:
 
 plt.figure("nn interpol rgb")
 plt.imshow(closest_color_RGB(smooth))
+plt.xlabel("horizontal pixel")
+plt.ylabel("vertical pixel")
 
 ###########################################################################################
 #   LAB LAB LAB LAB LAB LAB LAB LAB LAB
@@ -95,5 +97,7 @@ def closest_color_LAB(signal: np.ndarray) -> np.ndarray:
 
 plt.figure("nn interpol lab")
 plt.imshow(closest_color_LAB(smooth))
+plt.xlabel("horizontal pixel")
+plt.ylabel("vertical pixel")
 
 plt.show()
