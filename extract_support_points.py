@@ -59,6 +59,9 @@ def extract_support_points(signal, samples):
     c = np.abs(colours)
     plt.figure()
     ax = plt.axes(projection="3d")
+    ax.set_xlabel("L*")
+    ax.set_ylabel("A*")
+    ax.set_zlabel("B*")
     ax.scatter(colours[:, 0], colours[:, 1], colours[:, 2], c=c)
     for i, c in enumerate(colours):
         ax.text(c[0], c[1], c[2], letters[i])

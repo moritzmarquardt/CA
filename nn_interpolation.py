@@ -55,10 +55,15 @@ def closest_color_RGB(signal: np.ndarray) -> np.ndarray:
     return identifier
 
 
-plt.figure("nn interpol rgb")
-plt.imshow(closest_color_RGB(smooth))
+# plt.figure("nn interpol rgb")
+# plt.imshow(closest_color_RGB(smooth))
+# plt.xlabel("horizontal pixel")
+# plt.ylabel("vertical pixel")
+
+plt.figure("cut ph val")
+plt.plot(np.average(closest_color_RGB(smooth), axis=0))
 plt.xlabel("horizontal pixel")
-plt.ylabel("vertical pixel")
+plt.ylabel("concentration")
 
 ###########################################################################################
 #   LAB LAB LAB LAB LAB LAB LAB LAB LAB

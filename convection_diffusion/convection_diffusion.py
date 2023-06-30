@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.special as spsp
 
-xaxis = np.linspace(0, 3, 100)
+xaxis = np.linspace(0, 2, 100)
 time = 1
 D = 1e-2
 velocity = 1

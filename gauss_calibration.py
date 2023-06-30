@@ -2,10 +2,31 @@ import numpy as np
 import skimage
 from extract_support_points import extract_support_points
 import scipy.optimize as so
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
 
 from model_experiment import model_experiment
 
 baseline, image = model_experiment()
+
+fig, ax = plt.subplots()
+ax.imshow(skimage.img_as_float(image.img))
+
+rect = patches.Rectangle(
+    (1000, 80),
+    40,
+    40,
+    linewidth=1,
+    edgecolor="white",
+    facecolor="none",
+)
+ax.text(1000 + 80, 80 + 50, "P", fontsize=12, color="white")
+ax.add_patch(rect)
+ax.set_ylabel("vertical pixel")
+ax.set_xlabel("horizontal pixel")
+
+plt.show()
 
 # LAB
 diff = (

@@ -110,6 +110,16 @@ weighted_signal = (
 )
 axes[1].imshow(weighted_signal, vmin=0, vmax=1)
 
+plt.figure()
+plt.imshow(scalar_blue + scalar_green, vmin=0, vmax=1)
+plt.xlabel("horizontal pixel")
+plt.ylabel("vertical pixel")
+
+plt.figure("cut ph val")
+plt.plot(np.average(weighted_signal, axis=0))
+plt.xlabel("horizontal pixel")
+plt.ylabel("signal value")
+
 
 # plt.figure("cut ph val")
 # plt.plot(np.average(weighted_signal, axis=0))
